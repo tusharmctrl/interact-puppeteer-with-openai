@@ -149,7 +149,6 @@ if (autopilot) {
 }
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
-
 function good_html(html) {
   html = html.replace(/<\//g, " </");
   let $ = cheerio.load(html);
@@ -240,8 +239,13 @@ function redact_messages(messages) {
       //msg.content = msg.redacted ?? msg.content ?? "";
     }
 
+    console.log(msg.content);
     delete msg.redacted;
     delete msg.url;
+
+    try {
+      msg.content = JSON.parse(msg.content);
+    } catch (e) {}
 
     redacted_messages.push(msg);
   });
@@ -252,7 +256,6 @@ function redact_messages(messages) {
       JSON.stringify(redacted_messages, null, 2)
     );
   }
-
   return redacted_messages;
 }
 
@@ -387,6 +390,27 @@ async function send_chat_message(
       },
       required: ["summary", "answer"],
     },
+    {
+      name: "capture_screenshot",
+      description:
+        "Capture a screenshot of the given URL and provide the user with the screenshot path or any additional information they requested.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description:
+              "The URL of the webpage to capture the screenshot from.",
+          },
+          response: {
+            type: "string",
+            description:
+              "The response to the user, possibly including the location of the screenshot and any additional requested information.",
+          },
+        },
+        required: ["url", "response"],
+      },
+    },
   ];
 
   if (functions !== null) {
@@ -481,14 +505,20 @@ async function start_browser() {
     return the_page;
   }
 
-  const { browser, page } = await connect({
-    headless: "auto",
-    fingerprint: true,
-    turnstile: true,
-    connectOption: {
-      protocolTimeout: 1800000,
-    },
+  //   const { browser, page } = await connect({
+  //     headless: "auto",
+  //     fingerprint: true,
+  //     turnstile: true,
+  //     connectOption: {
+  //       protocolTimeout: 1800000,
+  //     },
+  //   });
+
+  const browser = await puppeteer.launch({
+    headless: headless ? "new" : false,
   });
+
+  const page = await browser.newPage();
 
   await page.setViewport({
     width: 1200,
@@ -889,6 +919,7 @@ async function do_next_step(
   let no_content = false;
 
   if (next_step.hasOwnProperty("function_call")) {
+    print({ next_step });
     let function_call = next_step.function_call;
     let function_name = function_call.name;
     let func_arguments;
@@ -930,6 +961,25 @@ async function do_next_step(
         print();
         message = "ERROR: You are not allowed to read this file";
       }
+    } else if (function_name === "capture_screenshot") {
+      const base64Image = await page.screenshot({
+        fullPage: true,
+        encoding: "base64",
+      });
+      const imageData = [
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${base64Image}`,
+          },
+        },
+      ];
+      no_content = true;
+      msg = {
+        role: "user",
+        content: JSON.stringify(imageData),
+      };
+      message = `Screenshot captured Successfully`;
     } else if (function_name === "goto_url") {
       let url = func_arguments.url;
 
@@ -939,7 +989,9 @@ async function do_next_step(
         await page.goto(url, {
           waitUntil: wait_until,
         });
-        console.log("Lets wait for 15 secs");
+        console.log(
+          "Lets wait for 15 secs - just so all the content of the page loads.."
+        );
         await sleep(15000);
         url = await page.url();
 
@@ -1079,16 +1131,12 @@ async function do_next_step(
           print(task_prefix + `Error submitting form`);
           message += "There was an error submitting the form.\n";
         }
-
         print(task_prefix + "Scraping page...");
         links_and_inputs = await get_tabbable_elements(page);
       }
     } else if (function_name === "answer_user") {
       let text = func_arguments.answer;
-
-      if (!text) {
-        text = func_arguments.summary;
-      }
+      text += ` ${func_arguments?.summary ?? ""}`;
 
       print_current_cost();
 
