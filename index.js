@@ -241,7 +241,6 @@ function redact_messages(messages) {
     if (msg.url != current_url) {
       //msg.content = msg.redacted ?? msg.content ?? "";
     }
-    print(msg.content);
     delete msg.redacted;
     delete msg.url;
 
@@ -539,8 +538,8 @@ async function start_browser() {
   // const page = await browser.newPage();
 
   await page.setViewport({
-    width: 1200,
-    height: 1200,
+    width: 1920,
+    height: 1080,
     deviceScaleFactor: 1,
   });
 
@@ -981,7 +980,7 @@ async function do_next_step(
       }
     } else if (function_name === "capture_screenshot") {
       await page.screenshot({
-        fullPage: true,
+        // fullPage: true,
         path: `${new Date().getTime()}.png`,
       });
       const base64Image = await page.screenshot({
@@ -1018,9 +1017,9 @@ async function do_next_step(
           waitUntil: wait_until,
         });
         console.log(
-          "Lets wait for 15 secs - just so all the content of the page loads.."
+          "Lets wait for 60 secs - just so all the content of the page loads.."
         );
-        await sleep(15000);
+        await sleep(60000);
         url = await page.url();
 
         message = `You are now on ${url}`;
