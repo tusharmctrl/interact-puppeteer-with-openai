@@ -982,7 +982,7 @@ async function do_next_step(
     } else if (function_name === "capture_screenshot") {
       await page.screenshot({
         fullPage: true,
-        path: "register.png",
+        path: `${new Date().getTime()}.png`,
       });
       const base64Image = await page.screenshot({
         fullPage: true,
