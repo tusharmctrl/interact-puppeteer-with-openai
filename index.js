@@ -5,6 +5,9 @@ import puppeteer, { TimeoutError } from "puppeteer";
 import { connect } from "puppeteer-real-browser";
 import cheerio from "cheerio";
 import readline from "readline";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const debug = in_array("--debug", process.argv);
 const autopilot = in_array("--autopilot", process.argv);
@@ -238,8 +241,7 @@ function redact_messages(messages) {
     if (msg.url != current_url) {
       //msg.content = msg.redacted ?? msg.content ?? "";
     }
-
-    console.log(msg.content);
+    print(msg.content);
     delete msg.redacted;
     delete msg.url;
 
@@ -411,6 +413,22 @@ async function send_chat_message(
         required: ["url", "response"],
       },
     },
+    {
+      name: "get_html",
+      description:
+        "Retrieve the HTML content of the instructed page and provide the user with the HTML content or any additional information they requested.",
+      parameters: {
+        type: "object",
+        properties: {
+          response: {
+            type: "string",
+            description:
+              "The response to the user, possibly including the HTML content and any additional requested information.",
+          },
+        },
+        required: ["page", "response"],
+      },
+    },
   ];
 
   if (functions !== null) {
@@ -505,20 +523,20 @@ async function start_browser() {
     return the_page;
   }
 
-  //   const { browser, page } = await connect({
-  //     headless: "auto",
-  //     fingerprint: true,
-  //     turnstile: true,
-  //     connectOption: {
-  //       protocolTimeout: 1800000,
-  //     },
-  //   });
-
-  const browser = await puppeteer.launch({
-    headless: headless ? "new" : false,
+  const { browser, page } = await connect({
+    headless: "auto",
+    fingerprint: true,
+    turnstile: true,
+    connectOption: {
+      protocolTimeout: 1800000,
+    },
   });
 
-  const page = await browser.newPage();
+  // const browser = await puppeteer.launch({
+  //   headless: headless ? "new" : false,
+  // });
+
+  // const page = await browser.newPage();
 
   await page.setViewport({
     width: 1200,
@@ -962,10 +980,16 @@ async function do_next_step(
         message = "ERROR: You are not allowed to read this file";
       }
     } else if (function_name === "capture_screenshot") {
+      await page.screenshot({
+        fullPage: true,
+        path: "register.png",
+      });
       const base64Image = await page.screenshot({
         fullPage: true,
         encoding: "base64",
       });
+      let page_content = await get_page_content(page);
+      page_content += "\n\n" + page_content.substring(0, context_length_limit);
       const imageData = [
         {
           type: "image_url",
@@ -973,13 +997,17 @@ async function do_next_step(
             url: `data:image/png;base64, ${base64Image}`,
           },
         },
+        {
+          type: "text",
+          text: page_content,
+        },
       ];
       no_content = true;
       msg = {
         role: "user",
         content: JSON.stringify(imageData),
       };
-      message = `Screenshot captured Successfully`;
+      message = `Screenshot and HTML captured Successfully`;
     } else if (function_name === "goto_url") {
       let url = func_arguments.url;
 
