@@ -278,22 +278,22 @@ async function send_chat_message(
   }
 
   let definitions = [
-    {
-      name: "make_plan",
-      description:
-        "Create a plan to accomplish the given task. Summarize what the user's task is in a step by step manner. How would you browse the internet to accomplish the task. Start with 'I will'",
-      parameters: {
-        type: "object",
-        properties: {
-          plan: {
-            type: "string",
-            description:
-              "The step by step plan on how you will navigate the internet and what you will do",
-          },
-        },
-      },
-      required: ["plan"],
-    },
+    // {
+    //   name: "make_plan",
+    //   description:
+    //     "Create a plan to accomplish the given task. Summarize what the user's task is in a step by step manner. How would you browse the internet to accomplish the task. Start with 'I will'",
+    //   parameters: {
+    //     type: "object",
+    //     properties: {
+    //       plan: {
+    //         type: "string",
+    //         description:
+    //           "The step by step plan on how you will navigate the internet and what you will do",
+    //       },
+    //     },
+    //   },
+    //   required: ["plan"],
+    // },
     {
       name: "read_file",
       description:
@@ -630,23 +630,16 @@ When you have executed all the operations needed for the original task, call ans
   let response;
 
   while (accept_plan !== "y") {
-    response = await send_chat_message(msg, context, {
-      name: "make_plan",
-      arguments: ["plan"],
-    });
-
-    let args = JSON.parse(response.function_call.arguments);
-
-    print("\n## PLAN ##");
-    print(args.plan);
-    print("## PLAN ##\n");
+    response = await send_chat_message(msg, context);
+    // let args = JSON.parse(response.function_call.arguments);
+    // print("\n## PLAN ##");
+    // print(args.plan);
+    // print("## PLAN ##\n");
 
     if (autopilot) {
       accept_plan = "y";
     } else {
-      accept_plan = await input(
-        "Do you want to continue with this plan? (y/n): "
-      );
+      accept_plan = await input("Are yous sure you want to continue? (y/n): ");
     }
   }
 
