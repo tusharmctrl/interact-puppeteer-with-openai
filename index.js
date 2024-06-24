@@ -933,7 +933,6 @@ async function do_next_step(
   let no_content = false;
 
   if (next_step.hasOwnProperty("function_call")) {
-    print({ next_step });
     let function_call = next_step.function_call;
     let function_name = function_call.name;
     let func_arguments;
