@@ -29,7 +29,7 @@ if (in_array("--timeout", process.argv)) {
   );
 }
 
-let wait_until = "load";
+let wait_until = "domcontentloaded";
 if (in_array("--waituntil", process.argv)) {
   wait_until = process.argv[parseInt(process.argv.indexOf("--waituntil")) + 1];
 }
@@ -118,25 +118,29 @@ function in_array(element, array) {
   return false;
 }
 
-async function input(text) {
-  let the_prompt;
-
+async function input(promptText) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  await (async () => {
-    return new Promise((resolve) => {
-      rl.question(text, (prompt) => {
-        the_prompt = prompt;
-        rl.close();
-        resolve();
-      });
-    });
-  })();
+  console.log(promptText);
 
-  return the_prompt;
+  const multilineInput = [];
+
+  return new Promise((resolve) => {
+    rl.on("line", (line) => {
+      if (line === "") {
+        rl.close();
+      } else {
+        multilineInput.push(line);
+      }
+    });
+
+    rl.on("close", () => {
+      resolve(multilineInput.join("\n"));
+    });
+  });
 }
 
 print("Using model: " + model + "\n");
@@ -1017,9 +1021,9 @@ async function do_next_step(
           waitUntil: wait_until,
         });
         console.log(
-          "Lets wait for 60 secs - just so all the content of the page loads.."
+          "Lets wait for 20 secs - just so all the content of the page loads.."
         );
-        await sleep(60000);
+        await sleep(20000);
         url = await page.url();
 
         message = `You are now on ${url}`;
