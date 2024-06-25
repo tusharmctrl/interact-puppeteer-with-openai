@@ -196,10 +196,10 @@ export async function do_next_step(
               if (inputType === "checkbox") {
                 await element.evaluate((el) => el.click());
               } else {
-                await element.type("yourText");
+                await element.type(validData(field));
               }
             } else if (tagName === "textarea") {
-              await element.type("yourText");
+              await element.type(validData(field));
             }
           } else {
             console.error(
