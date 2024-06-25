@@ -26,11 +26,11 @@ export async function send_chat_message(
       });
     }
     console.log("Sending ChatGPT request...");
-    const response = await fetchOpenAIResponse(
+    const response = await fetchOpenAIResponse({
       messages,
       definitions,
-      function_call
-    );
+      function_call,
+    });
 
     const data = response;
     if (!data.choices) {
@@ -156,70 +156,40 @@ export async function do_next_step(
       console.log("Scraping page...");
       links_and_inputs = await get_tabbable_elements(page);
     } else if (function_name === "type_text") {
-      let form_data = func_arguments.form_data;
-      let prev_input;
-      for (let data of form_data) {
-        let element_id = data.pgpt_id;
-        let text = data.text;
+      const formFields = await page.$$eval(
+        "form input, form select, form textarea",
+        (elements) => elements.map((element) => element.name || element.id)
+      );
 
-        message = "";
+      const message = `I am providing you an array of field names. You need to generate an object with keys as field names and values as dummy data based on the field names. If a field name is empty, ignore and remove it.
+        Strictly answer as an  json object where object will have field name will be key while value will be dummy data. Do not add any unnecessary information.
+        Field names:
+        ${formFields}
+        `;
+        
+      const response = await fetchOpenAIResponse({
+        messages: [
+          {
+            role: "assistant",
+            content: message,
+          },
+        ],
+        json_response: true,
+      });
 
-        try {
-          element = await page.$(".pgpt-element" + element_id);
-          console.log(element);
-          if (!prev_input) {
-            prev_input = element;
-          }
-
-          const name = await element.evaluate((el) => {
-            return el.getAttribute("name");
-          });
-
-          const type = await element.evaluate((el) => {
-            return el.getAttribute("type");
-          });
-
-          const tagName = await element.evaluate((el) => {
-            return el.tagName;
-          });
-
-          // ChatGPT sometimes tries to type empty string
-          // to buttons to click them
-          if (tagName === "BUTTON" || type === "submit" || type === "button") {
-            func_arguments.submit = true;
-          } else {
-            prev_input = element;
-            await element.type(text);
-            let sanitized = text.replace("\n", " ");
-            console.log(`Typing "${sanitized}" to ${name}`);
-            message += `Typed "${text}" to input field "${name}"\n`;
-          }
-        } catch (error) {
-          message += `Error typing "${text}" to input field ID ${data.element_id}\n`;
-        }
-      }
-
-      if (func_arguments.submit !== false) {
-        console.log(`Submitting form`);
-
-        try {
-          const form = await prev_input.evaluateHandle((input) =>
-            input.closest("form")
+      const validData = response.choices[0].message.content;
+      console.log("response : ", validData);
+      // Fill the form dynamically based on available fields
+      for (const field of formFields) {
+        if (field && field.trim() !== "") {
+          console.log("fieldvalues ",validData[field] , field)
+          await page.type(
+            `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`,
+            validData[field] ? validData[field] : ""
           );
-
-          await form.evaluate((form) => form.submit());
-          await wait_for_navigation(page);
-
-          let url = await page.url();
-
-          message += `Form sent! You are now on ${url}\n`;
-        } catch (error) {
-          console.log(`Error submitting form`);
-          message += "There was an error submitting the form.\n";
         }
-        console.log("Scraping page...");
-        links_and_inputs = await get_tabbable_elements(page);
       }
+    
     } else if (function_name === "answer_user") {
       let text = func_arguments.answer;
       text += ` ${func_arguments?.summary ?? ""}`;
@@ -228,7 +198,7 @@ export async function do_next_step(
       message = "That is an unknown function. Please call another one";
     }
 
-    message = message.substring(0, context_length_limit);
+    // message = message.substring(0, context_length_limit);
     msg = msg ?? {
       role: "function",
       name: function_name,
