@@ -46,36 +46,38 @@ export const functionDefinitions = [
     },
     required: ["reason", "pgpt_id"],
   },
+  // {
+  //   name: "type_text",
+  //   description: "Types text to input fields and optionally submit the form",
+  //   parameters: {
+  //     type: "object",
+  //     properties: {
+  //       form_data: {
+  //         type: "array",
+  //         items: {
+  //           type: "object",
+  //           properties: {},
+  //         },
+  //       },
+  //     },
+  //   },
+  //   required: ["form_data"],
+  // },
   {
-    name: "type_text",
-    description: "Types text to input fields and optionally submit the form",
+    name: "fill_form",
+    description:
+      "Fills the text to input fields and optionally submit the form",
     parameters: {
       type: "object",
       properties: {
-        form_data: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              pgpt_id: {
-                type: "number",
-                description:
-                  "The pgpt-id attribute of the input to type into (from the page content)",
-              },
-              text: {
-                type: "string",
-                description: "The text to type",
-              },
-            },
-          },
-        },
-        submit: {
-          type: "boolean",
-          description: "Whether to submit the form after filling the fields",
+        url: {
+          type: "string",
+          description:
+            "The URL to go to (including protocol) of the form page we're about to scrap.",
         },
       },
     },
-    required: ["form_data", "submit"],
+    required: ["url"],
   },
   {
     name: "answer_user",

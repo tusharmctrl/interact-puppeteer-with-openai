@@ -5,9 +5,10 @@ export async function fetchOpenAIResponse({
   messages,
   definitions = [],
   function_call = "auto",
-  json_response = false
+  json_response = false,
 }) {
   try {
+    console.log(messages);
     const MODEL = "gpt-4o";
     const openaiApiKey = process.env.OPENAI_API_KEY;
     const API_URL = "https://api.openai.com/v1/chat/completions";
@@ -31,7 +32,11 @@ export async function fetchOpenAIResponse({
     );
     return response.data;
   } catch (e) {
-    console.error("Error occurred while fetching OpenAI response:", e);
+    console.log(e.response.data);
+    console.error(
+      "Error occurred while fetching OpenAI response:",
+      e.data.error
+    );
     throw e;
   }
 }

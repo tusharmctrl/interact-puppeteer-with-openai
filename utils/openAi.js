@@ -40,8 +40,8 @@ export async function send_chat_message(
 
     return data.choices[0].message;
   } catch (error) {
-    console.log(error);
-    throw new Error("Something went wrong with open-ai", error);
+    console.log(console.log(error));
+    throw new Error("Something went wrong with open-ai", JSON.stringify(error));
   }
 }
 
@@ -117,7 +117,6 @@ export async function do_next_step(
     } else if (function_name === "click_link") {
       let link_id = func_arguments.pgpt_id;
       let link_text = func_arguments.text;
-      console.log({ link_id, link_text });
       if (!link_id) {
         message = "ERROR: Missing parameter pgpt_id";
       } else if (!link_text) {
@@ -155,14 +154,14 @@ export async function do_next_step(
       }
       console.log("Scraping page...");
       links_and_inputs = await get_tabbable_elements(page);
-    } else if (function_name === "type_text") {
+    } else if (function_name === "fill_form") {
       const formFields = await page.$$eval(
         "form input, form select, form textarea",
         (elements) => elements.map((element) => element.name || element.id)
       );
 
-      const message = `I am providing you an array of field names. You need to generate an object with keys as field names and values as dummy data based on the field names. If a field name is empty, ignore and remove it.
-        Strictly answer as an  json object where object will have field name will be key while value will be dummy data. Do not add any unnecessary information.
+      const messageForFillUps = `I am providing you an array of field names. You need to generate an object with keys as field names and values as dummy data based on the field names. If a field name is empty, ignore and remove it.
+        Strictly answer as an  json object where object will have field name will be key while value will be dummy data. Do not add any unnecessary information, and we would like you to add genuine data - it should not contain words like dummy, test
         Field names:
         ${formFields}
         `;
@@ -171,17 +170,16 @@ export async function do_next_step(
         messages: [
           {
             role: "assistant",
-            content: message,
+            content: messageForFillUps,
           },
         ],
         json_response: true,
       });
       let validData = response.choices[0].message.content;
       validData = JSON.parse(validData);
-      // Fill the form dynamically based on available fields
       for (const field of formFields) {
         if (field && field.trim() !== "") {
-          console.log("fieldvalues ", validData[field], field);
+          const value = validData[field];
           const element = await page.$(
             `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
           );
@@ -196,10 +194,10 @@ export async function do_next_step(
               if (inputType === "checkbox") {
                 await element.evaluate((el) => el.click());
               } else {
-                await element.type("yourText");
+                await element.type(value);
               }
             } else if (tagName === "textarea") {
-              await element.type("yourText");
+              await element.type(value);
             }
           } else {
             console.error(
@@ -208,6 +206,18 @@ export async function do_next_step(
           }
         }
       }
+      no_content = true;
+      // msg = {
+      //   role: "user",
+      //   content: [
+      //     {
+      //       type: "text",
+      //       text: `Here's the value that we filled in the form: ${JSON.stringify(
+      //         validData
+      //       )}`,
+      //     },
+      //   ],
+      // };
     } else if (function_name === "answer_user") {
       let text = func_arguments.answer;
       text += ` ${func_arguments?.summary ?? ""}`;
