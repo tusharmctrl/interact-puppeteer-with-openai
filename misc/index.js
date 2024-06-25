@@ -278,22 +278,6 @@ async function send_chat_message(
   }
 
   let definitions = [
-    // {
-    //   name: "make_plan",
-    //   description:
-    //     "Create a plan to accomplish the given task. Summarize what the user's task is in a step by step manner. How would you browse the internet to accomplish the task. Start with 'I will'",
-    //   parameters: {
-    //     type: "object",
-    //     properties: {
-    //       plan: {
-    //         type: "string",
-    //         description:
-    //           "The step by step plan on how you will navigate the internet and what you will do",
-    //       },
-    //     },
-    //   },
-    //   required: ["plan"],
-    // },
     {
       name: "read_file",
       description:
@@ -414,22 +398,6 @@ async function send_chat_message(
           },
         },
         required: ["url", "response"],
-      },
-    },
-    {
-      name: "get_html",
-      description:
-        "Retrieve the HTML content of the instructed page and provide the user with the HTML content or any additional information they requested.",
-      parameters: {
-        type: "object",
-        properties: {
-          response: {
-            type: "string",
-            description:
-              "The response to the user, possibly including the HTML content and any additional requested information.",
-          },
-        },
-        required: ["page", "response"],
       },
     },
   ];
@@ -605,6 +573,7 @@ async function start_browser() {
 }
 
 (async () => {
+  console.log("entry point of our code");
   let context = [
     {
       role: "system",
@@ -931,7 +900,7 @@ async function do_next_step(
   let message;
   let msg;
   let no_content = false;
-
+  console.log(next_step);
   if (next_step.hasOwnProperty("function_call")) {
     let function_call = next_step.function_call;
     let function_name = function_call.name;
@@ -983,8 +952,6 @@ async function do_next_step(
         fullPage: true,
         encoding: "base64",
       });
-      let page_content = await get_page_content(page);
-      page_content += "\n\n" + page_content.substring(0, context_length_limit);
       const imageData = [
         {
           type: "image_url",
@@ -992,20 +959,15 @@ async function do_next_step(
             url: `data:image/png;base64, ${base64Image}`,
           },
         },
-        {
-          type: "text",
-          text: page_content,
-        },
       ];
       no_content = true;
       msg = {
         role: "user",
         content: JSON.stringify(imageData),
       };
-      message = `Screenshot and HTML captured Successfully`;
+      message = `Screenshot captured Successfully`;
     } else if (function_name === "goto_url") {
       let url = func_arguments.url;
-
       print(task_prefix + "Going to " + url);
 
       try {
@@ -1088,7 +1050,6 @@ async function do_next_step(
     } else if (function_name === "type_text") {
       let form_data = func_arguments.form_data;
       let prev_input;
-
       for (let data of form_data) {
         let element_id = data.pgpt_id;
         let text = data.text;
@@ -1097,7 +1058,7 @@ async function do_next_step(
 
         try {
           element = await page.$(".pgpt-element" + element_id);
-
+          console.log(element);
           if (!prev_input) {
             prev_input = element;
           }
