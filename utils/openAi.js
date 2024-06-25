@@ -166,7 +166,7 @@ export async function do_next_step(
         Field names:
         ${formFields}
         `;
-        
+
       const response = await fetchOpenAIResponse({
         messages: [
           {
@@ -176,20 +176,38 @@ export async function do_next_step(
         ],
         json_response: true,
       });
-
-      const validData = response.choices[0].message.content;
-      console.log("response : ", validData);
+      let validData = response.choices[0].message.content;
+      validData = JSON.parse(validData);
       // Fill the form dynamically based on available fields
       for (const field of formFields) {
         if (field && field.trim() !== "") {
-          console.log("fieldvalues ",validData[field] , field)
-          await page.type(
-            `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`,
-            validData[field] ? validData[field] : ""
+          console.log("fieldvalues ", validData[field], field);
+          const element = await page.$(
+            `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
           );
+          if (element) {
+            const tagName = await page.evaluate(
+              (el) => el.tagName.toLowerCase(),
+              element
+            );
+            if (tagName === "input") {
+              const inputType = await page.evaluate((el) => el.type, element);
+              console.log(inputType);
+              if (inputType === "checkbox") {
+                await element.evaluate((el) => el.click());
+              } else {
+                await element.type("yourText");
+              }
+            } else if (tagName === "textarea") {
+              await element.type("yourText");
+            }
+          } else {
+            console.error(
+              `Element with field name or id '${field}' not found.`
+            );
+          }
         }
       }
-    
     } else if (function_name === "answer_user") {
       let text = func_arguments.answer;
       text += ` ${func_arguments?.summary ?? ""}`;

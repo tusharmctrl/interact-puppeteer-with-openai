@@ -393,3 +393,30 @@ export function make_tag(element) {
 
   return obj;
 }
+
+export async function handleInput(page, field, value) {
+  const elementHandle = await page.$(
+    `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
+  );
+  if (elementHandle) {
+    const tagName = await elementHandle.evaluate((el) =>
+      el.tagName.toLowerCase()
+    );
+    if (tagName === "input") {
+      const inputType = await elementHandle.evaluate((el) => el.type);
+      if (inputType === "checkbox") {
+        if (value) {
+          await elementHandle.evaluate((el) => el.click());
+        }
+      } else {
+        await elementHandle.type(value);
+      }
+    } else if (tagName === "select") {
+      await elementHandle.select(value);
+    } else if (tagName === "textarea") {
+      await elementHandle.type(value);
+    }
+  } else {
+    console.warn(`Element not found for field: ${field}`);
+  }
+}
