@@ -135,7 +135,6 @@ export const registerJourney = async (url) => {
             );
             if (tagName === "input") {
               const inputType = await page.evaluate((el) => el.type, element);
-              console.log(inputType);
               if (inputType === "checkbox") {
                 await element.evaluate((el) => el.click());
               } else {
@@ -143,6 +142,21 @@ export const registerJourney = async (url) => {
               }
             } else if (tagName === "textarea") {
               await element.type(value);
+            } else if (tagName === "select") {
+              const dropdownSelector = `select[name="${field}"]`;
+              console.log(field);
+              const options = await page.evaluate((dropdownSelector) => {
+                const selectElement = document.querySelector(dropdownSelector);
+                return Array.from(selectElement.options).map(
+                  (option) => option.value
+                );
+              }, dropdownSelector);
+              const filteredOptions = options.filter((option) => option !== "");
+              const randomOption =
+                filteredOptions[
+                  Math.floor(Math.random() * filteredOptions.length)
+                ];
+              await page.select(dropdownSelector, randomOption);
             }
           } else {
             console.error(
