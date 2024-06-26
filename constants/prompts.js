@@ -123,7 +123,7 @@ export const functionDefinitions = [
 
 export const REGISTER_HEURISTIC_PROMPT = `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such an array. 
 [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]
-You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array.
+You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform.
 
 - Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users. This CTA should be consistently visible in a fixed location, such as the header or sidebar, to guide new visitors towards account creation effortlessly.
 
