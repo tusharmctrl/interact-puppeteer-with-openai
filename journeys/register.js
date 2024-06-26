@@ -1,4 +1,7 @@
-import { functionDefinitions } from "../constants/prompts.js";
+import {
+  REGISTER_HEURISTIC_PROMPT,
+  functionDefinitions,
+} from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
 import { sleep } from "../utils/helpers.js";
 import {
@@ -8,6 +11,7 @@ import {
   wait_for_navigation,
 } from "../utils/puppeteer.js";
 import dotenv from "dotenv";
+import fs from "fs";
 dotenv.config();
 
 export const registerJourney = async (url) => {
@@ -28,7 +32,7 @@ export const registerJourney = async (url) => {
       {
         role: "assistant",
         type: "text",
-        content: `For the given html content - find a way how we can register into the platform and click on it. Remeber to return pgpt_id and pgpt_text both.`,
+        content: `Find a way how we can register into the platform and click on the appropriated element.`,
       },
     ];
     const screenshots = [];
@@ -40,7 +44,6 @@ export const registerJourney = async (url) => {
     console.log("API Call Executed for register!");
     const functionCall =
       openAiResponseForRegisterLink.choices[0].message.function_call;
-    console.log(functionCall);
     const args = JSON.parse(functionCall.arguments);
     const link_id = args.pgpt_id;
     const link = links_and_inputs.find(
@@ -105,11 +108,8 @@ export const registerJourney = async (url) => {
         (elements) => elements.map((element) => element.name || element.id)
       );
 
-      const messageForFillUps = `I am providing you an array of field names. You need to generate an object with keys as field names and values as dummy data based on the field names. If a field name is empty, ignore and remove it.
-        Strictly answer as an  json object where object will have field name will be key while value will be dummy data. Do not add any unnecessary information, and we would like you to add genuine data - it should not contain words like dummy, test
-        Field names:
-        ${formFields}
-        `;
+      const messageForFillUps = `I am providing you with an array of field names. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names. If a field name is empty, ignore and remove it. Strictly answer as a JSON object where the field names are the keys and the values are realistic dummy data. The data should be appropriate for the field name (e.g., if the field name is "username / name" it should generate a realistic username / name and it should not contain any blank spaces to it and it should be of one word only). Do not add any unnecessary information, and ensure the dummy data does not contain words like "dummy" or "test."
+      Form Fields: ${formFields}`;
 
       const forTypeResponse = await fetchOpenAIResponse({
         messages: [
@@ -179,6 +179,44 @@ export const registerJourney = async (url) => {
           url: `data:image/png;base64, ${afterTypeForm}`,
         },
       });
+      await page.keyboard.press("Enter");
+      await page.screenshot({
+        fullPage: true,
+        path: `images/stake/after-submit.png`,
+      });
+      const afterSubmitForm = await page.screenshot({
+        fullPage: true,
+        encoding: "base64",
+      });
+      screenshots.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/png;base64, ${afterSubmitForm}`,
+        },
+      });
+      console.log("Making an API call for heuristics....");
+      const heuristicResponse = await fetchOpenAIResponse({
+        messages: [
+          {
+            role: "user",
+            content: JSON.stringify(screenshots),
+          },
+          {
+            role: "assistant",
+            content: REGISTER_HEURISTIC_PROMPT,
+          },
+        ],
+        json_response: true,
+      });
+      const heuristicResponses = JSON.parse(
+        heuristicResponse.choices[0].message.content
+      );
+      console.log(heuristicResponses);
+      console.log(heuristicResponse.choices[0]);
+      fs.writeFileSync(
+        `heuristic_ans - ${new Date().getTime()}.json`,
+        JSON.stringify(heuristicResponses, null, 2)
+      );
     } catch (error) {
       console.log(error);
     }
@@ -187,4 +225,4 @@ export const registerJourney = async (url) => {
   }
 };
 
-registerJourney("https://stake.com");
+registerJourney("https://www.stake.com");

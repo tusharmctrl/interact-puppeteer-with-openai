@@ -120,3 +120,37 @@ export const functionDefinitions = [
     },
   },
 ];
+
+export const REGISTER_HEURISTIC_PROMPT = `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such an array. 
+[{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]
+You have to verify all the below questions through screenshots and need to give us the JSON array based on that. It should be strictly an array.
+
+- Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users. This CTA should be consistently visible in a fixed location, such as the header or sidebar, to guide new visitors towards account creation effortlessly.
+
+- Ensure the registration area opens in the same tab or window, providing a seamless user experience without redirecting users to a new tab, window, or modal/popup. This maintains continuity and reduces potential confusion during the registration process."
+
+- Ensure the registration page content is straightforward and easy to understand. Instructions and required actions should be immediately clear at first glance, enabling users to effortlessly complete the registration process."
+
+- Ensure that the registration process to maintain user control and awareness. Specifically, for multi-step registrations, include clear visual indicators that show users their current step, the total number of steps, and which steps are remaining. This ensures users understand their progress and what to expect next, enhancing their overall experience."
+
+- Ensure that the registration process includes easily accessible live help options. Does it Integrate features like live chat or instant customer support access, ensuring users can get immediate assistance at any point during the registration."
+
+- Review the registration form to confirm it is simple and user-friendly. Ensure that there are no unnecessary fields, incoherent groupings, or illogical orderings, providing a streamlined registration experience for users.
+
+- Review the registration form to confirm that all fields include appropriate hints, guidelines, or examples to demonstrate the expected input. This helps users understand exactly what information is required, enhancing the overall registration experience.
+
+- Review the registration form to ensure that all fields contain appropriate hints, guidelines, or examples to demonstrate the expected input. This helps users understand what information is required and how to provide it correctly, enhancing the overall registration experience."
+
+- Review the registration form to ensure that fields are designed appropriately. It uses pull-down menus, radio buttons, and checkboxes in preference to text entry fields where applicable. This simplifies data entry and improves the user experience."
+
+- Review the registration form to ensure there is a clear distinction between 'required' and 'optional' fields. This helps users understand which information is mandatory and which is optional, improving the overall registration experience."
+
+- Review the registration form to ensure that all text boxes are appropriately sized for the expected input. For example, the age text box should be short, while the name text box should have a suitable width to accommodate longer entries."
+
+- Ensure that data formats are clearly indicated for input (e.g., dates) and output (e.g., units of values) in the registration form. Use appropriate fields and labels, such as date pickers for dates and numerical input fields for numbers, to enhance user understanding and input accuracy."
+
+- Ensure that users can complete simple tasks by entering only essential information, with the system automatically providing non-essential information by default. This simplifies the user experience and streamlines the completion of tasks."
+
+- Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols. This helps users create strong and secure passwords
+
+- Make sure the website shows clear error messages when fields are filled out incorrectly or incompletely. This helps users fix their mistakes quickly."`;
