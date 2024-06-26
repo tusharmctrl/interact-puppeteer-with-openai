@@ -79,26 +79,26 @@ export const functionDefinitions = [
     },
     required: ["url"],
   },
-  {
-    name: "answer_user",
-    description:
-      "Give an answer to the user and end the navigation. Use when the given task has been completed. Summarize the relevant parts of the page content first and give an answer to the user based on that.",
-    parameters: {
-      type: "object",
-      properties: {
-        summary: {
-          type: "string",
-          description:
-            "A summary of the relevant parts of the page content that you base the answer on",
-        },
-        answer: {
-          type: "string",
-          description: "The response to the user",
-        },
-      },
-    },
-    required: ["summary", "answer"],
-  },
+  // {
+  //   name: "answer_user",
+  //   description:
+  //     "Give an answer to the user and end the navigation. Use when the given task has been completed. Summarize the relevant parts of the page content first and give an answer to the user based on that.",
+  //   parameters: {
+  //     type: "object",
+  //     properties: {
+  //       summary: {
+  //         type: "string",
+  //         description:
+  //           "A summary of the relevant parts of the page content that you base the answer on",
+  //       },
+  //       answer: {
+  //         type: "string",
+  //         description: "The response to the user",
+  //       },
+  //     },
+  //   },
+  //   required: ["summary", "answer"],
+  // },
   {
     name: "capture_screenshot",
     description:

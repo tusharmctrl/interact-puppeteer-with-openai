@@ -123,7 +123,6 @@ function ugly_chowder(html) {
     }
 
     let the_tag = make_tag(element);
-
     if ($(element).attr("pgpt-id")) {
       output += " " + (the_tag.tag ? the_tag.tag : "");
     } else if (element.type === "text" && !$(element.parent).attr("pgpt-id")) {

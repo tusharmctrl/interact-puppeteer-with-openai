@@ -8,11 +8,9 @@ export async function fetchOpenAIResponse({
   json_response = false,
 }) {
   try {
-    console.log(messages);
     const MODEL = "gpt-4o";
     const openaiApiKey = process.env.OPENAI_API_KEY;
     const API_URL = "https://api.openai.com/v1/chat/completions";
-
     const response = await axios.post(
       API_URL,
       {
@@ -33,10 +31,6 @@ export async function fetchOpenAIResponse({
     return response.data;
   } catch (e) {
     console.log(e.response.data);
-    console.error(
-      "Error occurred while fetching OpenAI response:",
-      e.data.error
-    );
     throw e;
   }
 }
