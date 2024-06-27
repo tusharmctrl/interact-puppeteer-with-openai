@@ -13,20 +13,6 @@ When you have executed all the operations needed for the original task, call ans
 
 export const functionDefinitions = [
   {
-    name: "goto_url",
-    description: "Goes to a specific URL and gets the content",
-    parameters: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "The URL to go to (including protocol)",
-        },
-      },
-    },
-    required: ["url"],
-  },
-  {
     name: "click_link",
     description:
       "Clicks a link with the given pgpt_id on the page. Note that pgpt_id is required and you must use the corresponding pgpt-id attribute from the page content. Add the text of the link to confirm that you are clicking the right link.",
@@ -46,23 +32,6 @@ export const functionDefinitions = [
     },
     required: ["reason", "pgpt_id"],
   },
-  // {
-  //   name: "type_text",
-  //   description: "Types text to input fields and optionally submit the form",
-  //   parameters: {
-  //     type: "object",
-  //     properties: {
-  //       form_data: {
-  //         type: "array",
-  //         items: {
-  //           type: "object",
-  //           properties: {},
-  //         },
-  //       },
-  //     },
-  //   },
-  //   required: ["form_data"],
-  // },
   {
     name: "fill_form",
     description:
@@ -79,26 +48,6 @@ export const functionDefinitions = [
     },
     required: ["url"],
   },
-  // {
-  //   name: "answer_user",
-  //   description:
-  //     "Give an answer to the user and end the navigation. Use when the given task has been completed. Summarize the relevant parts of the page content first and give an answer to the user based on that.",
-  //   parameters: {
-  //     type: "object",
-  //     properties: {
-  //       summary: {
-  //         type: "string",
-  //         description:
-  //           "A summary of the relevant parts of the page content that you base the answer on",
-  //       },
-  //       answer: {
-  //         type: "string",
-  //         description: "The response to the user",
-  //       },
-  //     },
-  //   },
-  //   required: ["summary", "answer"],
-  // },
   {
     name: "capture_screenshot",
     description:
@@ -154,3 +103,57 @@ You have to verify all the below questions through screenshots and need to give 
 - Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols. This helps users create strong and secure passwords
 
 - Make sure the website shows clear error messages when fields are filled out incorrectly or incompletely. This helps users fix their mistakes quickly."`;
+
+// [{
+//   name: "goto_url",
+//   description: "Goes to a specific URL and gets the content",
+//   parameters: {
+//     type: "object",
+//     properties: {
+//       url: {
+//         type: "string",
+//         description: "The URL to go to (including protocol)",
+//       },
+//     },
+//   },
+//   required: ["url"],
+// },
+
+// {
+//   name: "answer_user",
+//   description:
+//     "Give an answer to the user and end the navigation. Use when the given task has been completed. Summarize the relevant parts of the page content first and give an answer to the user based on that.",
+//   parameters: {
+//     type: "object",
+//     properties: {
+//       summary: {
+//         type: "string",
+//         description:
+//           "A summary of the relevant parts of the page content that you base the answer on",
+//       },
+//       answer: {
+//         type: "string",
+//         description: "The response to the user",
+//       },
+//     },
+//   },
+//   required: ["summary", "answer"],
+// },
+
+// {
+//   name: "type_text",
+//   description: "Types text to input fields and optionally submit the form",
+//   parameters: {
+//     type: "object",
+//     properties: {
+//       form_data: {
+//         type: "array",
+//         items: {
+//           type: "object",
+//           properties: {},
+//         },
+//       },
+//     },
+//   },
+//   required: ["form_data"],
+// }]

@@ -50,3 +50,24 @@ export function redact_messages(messages) {
 export async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export async function singleLineInput(text) {
+  let the_prompt;
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  await (async () => {
+    return new Promise((resolve) => {
+      rl.question(text, (prompt) => {
+        the_prompt = prompt;
+        rl.close();
+        resolve();
+      });
+    });
+  })();
+
+  return the_prompt;
+}

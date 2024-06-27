@@ -393,29 +393,44 @@ export function make_tag(element) {
   return obj;
 }
 
-export async function handleInput(page, field, value) {
-  const elementHandle = await page.$(
-    `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
-  );
-  if (elementHandle) {
-    const tagName = await elementHandle.evaluate((el) =>
-      el.tagName.toLowerCase()
-    );
-    if (tagName === "input") {
-      const inputType = await elementHandle.evaluate((el) => el.type);
-      if (inputType === "checkbox") {
-        if (value) {
-          await elementHandle.evaluate((el) => el.click());
+export async function typeTextInForm(formFields, data, page) {
+  for (const field of formFields) {
+    if (field && field.trim() !== "") {
+      const value = data[field];
+      const element = await page.$(
+        `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
+      );
+      if (element) {
+        const tagName = await page.evaluate(
+          (el) => el.tagName.toLowerCase(),
+          element
+        );
+        if (tagName === "input") {
+          const inputType = await page.evaluate((el) => el.type, element);
+          if (inputType === "checkbox") {
+            await element.evaluate((el) => el.click());
+          } else {
+            await element.type(value);
+          }
+        } else if (tagName === "textarea") {
+          await element.type(value);
+        } else if (tagName === "select") {
+          const dropdownSelector = `select[name="${field}"]`;
+          console.log(field);
+          const options = await page.evaluate((dropdownSelector) => {
+            const selectElement = document.querySelector(dropdownSelector);
+            return Array.from(selectElement.options).map(
+              (option) => option.value
+            );
+          }, dropdownSelector);
+          const filteredOptions = options.filter((option) => option !== "");
+          const randomOption =
+            filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
+          await page.select(dropdownSelector, randomOption);
         }
       } else {
-        await elementHandle.type(value);
+        console.error(`Element with field name or id '${field}' not found.`);
       }
-    } else if (tagName === "select") {
-      await elementHandle.select(value);
-    } else if (tagName === "textarea") {
-      await elementHandle.type(value);
     }
-  } else {
-    console.warn(`Element not found for field: ${field}`);
   }
 }
