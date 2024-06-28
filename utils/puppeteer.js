@@ -395,10 +395,10 @@ export function make_tag(element) {
 
 export async function typeTextInForm(formFields, data, page) {
   for (const field of formFields) {
-    if (field && field.trim() !== "") {
+    if (field.name && field.name.trim() !== "") {
       const value = data[field];
       const element = await page.$(
-        `input[name="${field}"], input[id="${field}"], select[name="${field}"], select[id="${field}"], textarea[name="${field}"], textarea[id="${field}"]`
+        `input[name="${field.name}"], input[id="${field.name}"], select[name="${field.name}"], select[id="${field.name}"], textarea[name="${field.name}"], textarea[id="${field.name}"]`
       );
       if (element) {
         const tagName = await page.evaluate(
@@ -409,14 +409,16 @@ export async function typeTextInForm(formFields, data, page) {
           const inputType = await page.evaluate((el) => el.type, element);
           if (inputType === "checkbox") {
             await element.evaluate((el) => el.click());
-          } else {
+          } else if (inputType === "radio") {
+          } else if (inputType === "hidden") {
+          } {
             await element.type(value);
           }
         } else if (tagName === "textarea") {
           await element.type(value);
         } else if (tagName === "select") {
-          const dropdownSelector = `select[name="${field}"]`;
-          console.log(field);
+          const dropdownSelector = `select[name="${field.name}"]`;
+          console.log(field.name);
           const options = await page.evaluate((dropdownSelector) => {
             const selectElement = document.querySelector(dropdownSelector);
             return Array.from(selectElement.options).map(
@@ -429,7 +431,7 @@ export async function typeTextInForm(formFields, data, page) {
           await page.select(dropdownSelector, randomOption);
         }
       } else {
-        console.error(`Element with field name or id '${field}' not found.`);
+        console.error(`Element with field name or id '${field.name}' not found.`);
       }
     }
   }

@@ -3,7 +3,7 @@ import {
   functionDefinitions,
 } from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
-import { sleep } from "../utils/helpers.js";
+import { getFormFields, sleep } from "../utils/helpers.js";
 import {
   get_page_content,
   get_tabbable_elements,
@@ -112,15 +112,17 @@ export const registerJourney = async (url, stage) => {
         path: `images/stake/errors.png`,
       });
 
+      
+      
       /**
        * Here - we'll write our code for typing values in to the form.
-       */
-      const formFields = await page.$$eval(
-        "form input, form select, form textarea",
-        (elements) => elements.map((element) => element.name || element.id)
-      );
+      */
+     
+      const {formFields , targetFrame } = getFormFields(page)
 
-      const messageForFillUps = `I am providing you with an array of field names. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names. If a field name is empty, ignore and remove it. Strictly answer as a JSON object where the field names are the keys and the values are realistic dummy data. The data should be appropriate for the field name (e.g., if the field name is "username / name" it should generate a realistic username / name and it should not contain any blank spaces to it and it should be of one word only). Do not add any unnecessary information, and ensure the dummy data does not contain words like "dummy" or "test. By taking a look at the screenshot if you think that the field is optional - just ignore / skip the data for that field."
+      const messageForFillUps = `I am providing you with an array of object which contains fieldname , tagname , type , value. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names, type , and tagname. If a field name is empty, ignore and remove it. 
+      
+      Strictly answer as a JSON object where the field names are the keys(Do not modify field name, keep it as it is) and the values are realistic dummy data. The data should be appropriate for the field name (e.g., if the field name is "username / name" it should generate a realistic username / name and it should not contain any blank spaces to it and it should be of one word only). Do not add any unnecessary information, and ensure the dummy data does not contain words like "dummy" or "test."
       Form Fields: ${formFields}`;
 
       const forTypeResponse = await fetchOpenAIResponse({
@@ -147,7 +149,7 @@ export const registerJourney = async (url, stage) => {
       validData = JSON.parse(validData);
       console.log(validData);
       // writing gathered-data from GPT to form fields.
-      // await typeTextInForm(formFields, validData, page);
+      // await typeTextInForm(formFields, validData, targetFrame ? targetFrame : page);
       // await page.screenshot({
       //   fullPage: true,
       //   path: `images/stake/after-type.png`,
