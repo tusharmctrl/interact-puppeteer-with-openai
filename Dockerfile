@@ -16,14 +16,14 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get update && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and package-lock.json (if available)
 COPY package*.json ./
@@ -38,5 +38,4 @@ COPY . .
 EXPOSE 3000
 
 # Command to run the application
-# CMD ["node", "-v"]
-CMD ["node", "journeys/register.js"]
+CMD ["node", "server"]

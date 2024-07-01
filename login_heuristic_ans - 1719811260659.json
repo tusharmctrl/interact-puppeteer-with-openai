@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "title": "Ensure that the 'Sign In' button is easy to see on every page of the website.",
+      "observation": "The 'Sign In' button is located at the top right corner of the page. It is visible against the background color of the header.",
+      "result": "passed",
+      "suggestions": "No immediate improvements needed as the 'Sign In' button is prominently visible on every page."
+    },
+    {
+      "title": "Ensure that the 'Sign In' button is easy to see on every page of the website. Additionally, users should be able to sign in using a combination of their username or email and password.",
+      "observation": "The 'Sign In' button is visible on every page, and the sign-in form allows users to enter either their username or email along with a password.",
+      "result": "passed",
+      "suggestions": "Ensure this functionality remains consistent across all pages and during future updates."
+    },
+    {
+      "title": "Ensure there is an accessible and straightforward process for users to recover forgotten passwords.",
+      "observation": "A 'Forgot Password' link is visible on the sign-in popup, providing a means for users to recover their passwords.",
+      "result": "passed",
+      "suggestions": "Ensure the process of password recovery is smooth and that the instructions provided are clear and concise. Additionally, consider offering hints or password strength indicators during recovery."
+    },
+    {
+      "title": "Ensure there is an accessible and straightforward process for users who have forgotten their email addresses.",
+      "observation": "There is no visible link or option specifically for users who have forgotten their email addresses.",
+      "result": "failed",
+      "suggestions": "Implement a 'Forgot Email' or 'Recover Email' option that offers users clear instructions to verify their identity and recover or verify their email addresses."
+    },
+    {
+      "title": "Ensure there is an option for users to 'Remember My Details'.",
+      "observation": "There is no visible 'Remember My Details' or 'Stay Signed In' option available on the sign-in form.",
+      "result": "failed",
+      "suggestions": "Add a checkbox for 'Remember My Details' to allow users the convenience of saving their login credentials for future visits."
+    },
+    {
+      "title": "Ensure the site features helpful error messaging that triggers only when fields are incorrectly input, ensuring users receive clear guidance to correct mistakes effectively.",
+      "observation": "An 'Error: Invalid credentials.' message appears when incorrect login details are entered, guiding users about potential issues with their credentials.",
+      "result": "passed",
+      "suggestions": "Ensure the error messages are specific and provide users with recommendations to resolve the issue, such as resetting the password or recovering the username."
+    },
+    {
+      "title": "Ensure CAPTCHA or other anti-bot measures are implemented during sign-in to enhance security and prevent automated attacks.",
+      "observation": "No CAPTCHA or other anti-bot measures are visible on the sign-in form.",
+      "result": "failed",
+      "suggestions": "Implement CAPTCHA or other security measures during the sign-in process to prevent automated bots and enhance overall security."
+    },
+    {
+      "title": "Ensure that error messaging is clear and concise, providing users with specific reasons for the error encountered and clear instructions on the next steps to resolve the issue effectively.",
+      "observation": "The error message 'Invalid credentials' is displayed when incorrect details are entered, which is clear but lacks detailed instructions for resolution.",
+      "result": "couldn't determine",
+      "suggestions": "Enhance error messaging to include specific guidance on possible next steps, such as checking email/username spelling or using the 'Forgot Password' option."
+    }
+  ]
+}

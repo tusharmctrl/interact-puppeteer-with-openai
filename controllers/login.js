@@ -1,24 +1,19 @@
-import {
-  LOGIN_HEURISTIC_PROMPT,
-  functionDefinitions,
-} from "../constants/prompts.js";
+import { functionDefinitions, LOGIN_HEURISTIC_PROMPT } from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
-import { singleLineInput, sleep } from "../utils/helpers.js";
-import dotenv from "dotenv";
-import fs from "fs";
+import { singleLineInput, sleep, generalResponse } from "../utils/helpers.js";
 import {
   get_page_content,
   get_tabbable_elements,
   start_browser,
-  wait_for_navigation,
+  wait_for_navigation
 } from "../utils/puppeteer.js";
-dotenv.config();
-
-const loginJourney = async (url) => {
+import fs from "fs"
+export const loginJourney = async (req, res) => {
   try {
-    const email = await singleLineInput("Provide Email / Username For Login: ");
-    const password = await singleLineInput("Provide Password For Login: ");
-    const { page } = await start_browser();
+    const email = "TestDeveloper"
+    const password = "Test@1"
+    const url = req.query.url;
+    const { browser, page } = await start_browser();
     await page.setViewport({
       width: 1920,
       height: 1080,
@@ -27,7 +22,8 @@ const loginJourney = async (url) => {
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
-    await sleep(30000);
+    // waiting for 25 secs - just to make sure we are loading all the necessary things initially.
+    await sleep(25000);
     await page.screenshot({
       fullPage: true,
       path: `images/stake/home.png`,
@@ -171,12 +167,14 @@ const loginJourney = async (url) => {
         `login_heuristic_ans - ${new Date().getTime()}.json`,
         JSON.stringify(heuristicResponses, null, 2)
       );
+      return generalResponse(res, { evaluationResult: heuristicResponses }, "Successfully Completed Login Journey", 'success', true, 200);
     } catch (e) {
       console.log(e);
+    } finally {
+      await browser.close()
     }
   } catch (error) {
     throw error;
   }
 };
 
-loginJourney("https://www.stake.com");

@@ -3,7 +3,7 @@ import {
   functionDefinitions,
 } from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
-import { getFormFields, sleep } from "../utils/helpers.js";
+import { getFormFields, sleep, generalResponse } from "../utils/helpers.js";
 import {
   get_page_content,
   get_tabbable_elements,
@@ -15,9 +15,10 @@ import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
 
-export const registerJourney = async (url) => {
+export const registerJourney = async (req, res) => {
   try {
-    const { page } = await start_browser();
+    const url = req.query.url;
+    const { browser, page } = await start_browser();
     await page.setViewport({
       width: 1920,
       height: 1080,
@@ -29,8 +30,7 @@ export const registerJourney = async (url) => {
     console.log(
       `Redirecting to ${url} Lets wait for 15 secs - just so all the content of the page loads..`
     );
-    const screenshots = [];
-    await sleep(20000);
+    await sleep(10000);
     await page.screenshot({
       fullPage: true,
       path: `images/stake/home.png`,
@@ -43,9 +43,10 @@ export const registerJourney = async (url) => {
       {
         role: "assistant",
         type: "text",
-        content: `Find a way to "register or join" into the system and click on the element`,
+        content: `Find a way to"register or join" into the system and click on the element`,
       },
     ];
+    const screenshots = [];
     const openAiResponseForRegisterLink = await fetchOpenAIResponse({
       messages: message,
       definitions: functionDefinitions,
@@ -58,6 +59,7 @@ export const registerJourney = async (url) => {
     const link = links_and_inputs.find(
       (elem) => elem && elem.id == args.pgpt_id
     );
+    console.log(link);
     try {
       /**
        * Once we receive the pgpt_id from GPT for the respected register button - we're making it click through puppeteer.
@@ -83,8 +85,7 @@ export const registerJourney = async (url) => {
       });
       /**
        * Here we're submitting the form without filling up any values -- so it can generate errors and we can test
-       * our heuristics related to errors. This might wont work - we may have to find the "submit" button of a DOM and then
-       * we'll have to click it.
+       * our heuristics related to errors.
        */
       await page.keyboard.press("Enter");
       const errorImage = await page.screenshot({
@@ -110,12 +111,14 @@ export const registerJourney = async (url) => {
         path: `images/stake/errors.png`,
       });
 
+
+
       /**
        * Here - we'll write our code for typing values in to the form.
-       */
+      */
 
-      const { formFields, targetFrame } = getFormFields(page);
-
+      const { formFields, targetFrame } = getFormFields(page)
+      console.log(formFields);
       const messageForFillUps = `I am providing you with an array of object which contains fieldname , tagname , type , value. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names, type , and tagname. If a field name is empty, ignore and remove it. 
       
       Strictly answer as a JSON object where the field names are the keys(Do not modify field name, keep it as it is) and the values are realistic dummy data. The data should be appropriate for the field name (e.g., if the field name is "username / name" it should generate a realistic username / name and it should not contain any blank spaces to it and it should be of one word only). Do not add any unnecessary information, and ensure the dummy data does not contain words like "dummy" or "test."
@@ -143,9 +146,8 @@ export const registerJourney = async (url) => {
       });
       let validData = forTypeResponse.choices[0].message.content;
       validData = JSON.parse(validData);
-      console.log(validData);
-      // writing gathered-data from GPT to form fields.
-      await typeTextInForm(formFields, validData, page);
+      // writing gathered - data from GPT to form fields.
+      await typeTextInForm(formFields, validData, targetFrame ? targetFrame : page);
       await page.screenshot({
         fullPage: true,
         path: `images/stake/after-type.png`,
@@ -196,14 +198,16 @@ export const registerJourney = async (url) => {
         `heuristic_ans - ${new Date().getTime()}.json`,
         JSON.stringify(heuristicResponses, null, 2)
       );
+
       console.log("Register Journey Ended");
+      return generalResponse(res, { evaluationResult: heuristicResponses }, "Successfully Completed Register Journey", 'success', true, 200);
     } catch (error) {
       console.log(error);
+    } finally {
+      await browser.close()
     }
   } catch (error) {
     console.log(error);
   }
 };
 
-registerJourney("https://www.stake.com");
-// registerJourney("https://www.pinnacle.com");

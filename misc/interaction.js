@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
-import { input } from "./utils/helpers.js";
-import { do_next_step, send_chat_message } from "./utils/openAi.js";
-import { SYSTEM_PROMPT } from "./constants/prompts.js";
-import { start_browser } from "./utils/puppeteer.js";
+import { input } from "../utils/helpers.js";
+import { do_next_step, send_chat_message } from "../utils/openAi.js";
+import { SYSTEM_PROMPT } from "../constants/prompts.js";
+import { start_browser } from "../utils/puppeteer.js";
 dotenv.config();
 
 const main = async () => {
