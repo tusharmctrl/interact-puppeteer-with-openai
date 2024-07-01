@@ -30,7 +30,7 @@ export const registerJourney = async (req, res) => {
     console.log(
       `Redirecting to ${url} Lets wait for 15 secs - just so all the content of the page loads..`
     );
-    await sleep(10000);
+    await sleep(20000);
     await page.screenshot({
       fullPage: true,
       path: `images/stake/home.png`,
@@ -117,7 +117,7 @@ export const registerJourney = async (req, res) => {
        * Here - we'll write our code for typing values in to the form.
       */
 
-      const { formFields, targetFrame } = getFormFields(page)
+      const { formFields, targetFrame } = await getFormFields(page)
       console.log(formFields);
       const messageForFillUps = `I am providing you with an array of object which contains fieldname , tagname , type , value. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names, type , and tagname. If a field name is empty, ignore and remove it. 
       

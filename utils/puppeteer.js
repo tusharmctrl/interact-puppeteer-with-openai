@@ -396,7 +396,7 @@ export function make_tag(element) {
 export async function typeTextInForm(formFields, data, page) {
   for (const field of formFields) {
     if (field.name && field.name.trim() !== "") {
-      const value = data[field];
+      const value = data[field.name];
       const element = await page.$(
         `input[name="${field.name}"], input[id="${field.name}"], select[name="${field.name}"], select[id="${field.name}"], textarea[name="${field.name}"], textarea[id="${field.name}"]`
       );
@@ -411,7 +411,7 @@ export async function typeTextInForm(formFields, data, page) {
             await element.evaluate((el) => el.click());
           } else if (inputType === "radio") {
           } else if (inputType === "hidden") {
-          } {
+          } else {
             await element.type(value);
           }
         } else if (tagName === "textarea") {
