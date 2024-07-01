@@ -157,3 +157,33 @@ You have to verify all the below questions through screenshots and need to give 
 //   },
 //   required: ["form_data"],
 // }]
+
+export const LOGIN_HEURISTIC_PROMPT = `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such a JSON array object. 
+{data: [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]}
+You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform. 
+I want you to thoroughly examine all the screenshots I am providing you here - and based on them give an answer. 
+
+- Ensure that the 'Sign In' button is easy to see on every page of the website. 
+It should always be in a clear and noticeable spot so users can easily find it no matter where they are on the site.
+
+- Ensure that the 'Sign In' button is easy to see on every page of the website. 
+It should always be in a clear and noticeable spot so users can easily find it no matter where they are on the site. Additionally, users should be able to sign in using a combination of their username or email and password.
+
+- Ensure there is an accessible and straightforward process for users to recover forgotten passwords. 
+This process should be easy to find, simple to follow, and provide clear instructions to help users reset their passwords quickly and securely.
+
+- Ensure there is an accessible and straightforward process for users who have forgotten their email addresses. 
+This process should be easy to find, simple to follow, and provide clear instructions to help users recover or verify their email addresses quickly and securely.
+
+- Ensure there is an option for users to 'Remember My Details'. 
+This feature should be prominently available, allowing users to conveniently save their login credentials for future visits, thereby enhancing usability and user experience on the website.
+
+- Ensure the site features helpful error messaging that triggers only when fields are incorrectly input, ensuring users receive clear guidance to correct mistakes effectively. 
+This approach prevents confusion and enhances user experience by facilitating smooth interactions throughout the site.
+
+- Ensure CAPTCHA or other anti-bot measures are implemented during sign-in to enhance security and prevent automated attacks, thereby safeguarding user accounts and maintaining the integrity of the login process.
+
+- Ensure that error messaging is clear and concise, providing users with specific reasons for the error encountered and clear instructions on the next steps to resolve the issue effectively. This approach enhances user understanding and facilitates smoother navigation and interaction on the site.
+
+These are the heuristics which needs to be tested.
+`;

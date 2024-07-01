@@ -15,7 +15,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
 
-export const registerJourney = async (url, stage) => {
+export const registerJourney = async (url) => {
   try {
     const { page } = await start_browser();
     await page.setViewport({
@@ -29,7 +29,8 @@ export const registerJourney = async (url, stage) => {
     console.log(
       `Redirecting to ${url} Lets wait for 15 secs - just so all the content of the page loads..`
     );
-    await sleep(10000);
+    const screenshots = [];
+    await sleep(20000);
     await page.screenshot({
       fullPage: true,
       path: `images/stake/home.png`,
@@ -42,12 +43,9 @@ export const registerJourney = async (url, stage) => {
       {
         role: "assistant",
         type: "text",
-        content: `Find a way to ${
-          stage === "REGISTER" ? "register or join" : "login or sign in"
-        } into the system and click on the element`,
+        content: `Find a way to "register or join" into the system and click on the element`,
       },
     ];
-    const screenshots = [];
     const openAiResponseForRegisterLink = await fetchOpenAIResponse({
       messages: message,
       definitions: functionDefinitions,
@@ -60,7 +58,6 @@ export const registerJourney = async (url, stage) => {
     const link = links_and_inputs.find(
       (elem) => elem && elem.id == args.pgpt_id
     );
-    console.log(link);
     try {
       /**
        * Once we receive the pgpt_id from GPT for the respected register button - we're making it click through puppeteer.
@@ -86,7 +83,8 @@ export const registerJourney = async (url, stage) => {
       });
       /**
        * Here we're submitting the form without filling up any values -- so it can generate errors and we can test
-       * our heuristics related to errors.
+       * our heuristics related to errors. This might wont work - we may have to find the "submit" button of a DOM and then
+       * we'll have to click it.
        */
       await page.keyboard.press("Enter");
       const errorImage = await page.screenshot({
@@ -112,13 +110,11 @@ export const registerJourney = async (url, stage) => {
         path: `images/stake/errors.png`,
       });
 
-      
-      
       /**
        * Here - we'll write our code for typing values in to the form.
-      */
-     
-      const {formFields , targetFrame } = getFormFields(page)
+       */
+
+      const { formFields, targetFrame } = getFormFields(page);
 
       const messageForFillUps = `I am providing you with an array of object which contains fieldname , tagname , type , value. You need to generate a JSON object with keys as the field names and values as genuine dummy data based on the field names, type , and tagname. If a field name is empty, ignore and remove it. 
       
@@ -149,58 +145,58 @@ export const registerJourney = async (url, stage) => {
       validData = JSON.parse(validData);
       console.log(validData);
       // writing gathered-data from GPT to form fields.
-      // await typeTextInForm(formFields, validData, targetFrame ? targetFrame : page);
-      // await page.screenshot({
-      //   fullPage: true,
-      //   path: `images/stake/after-type.png`,
-      // });
-      // const afterTypeForm = await page.screenshot({
-      //   fullPage: true,
-      //   encoding: "base64",
-      // });
-      // screenshots.push({
-      //   type: "image_url",
-      //   image_url: {
-      //     url: `data:image/png;base64, ${afterTypeForm}`,
-      //   },
-      // });
-      // await page.keyboard.press("Enter");
-      // await page.screenshot({
-      //   fullPage: true,
-      //   path: `images/stake/after-submit.png`,
-      // });
-      // const afterSubmitForm = await page.screenshot({
-      //   fullPage: true,
-      //   encoding: "base64",
-      // });
-      // screenshots.push({
-      //   type: "image_url",
-      //   image_url: {
-      //     url: `data:image/png;base64, ${afterSubmitForm}`,
-      //   },
-      // });
-      // console.log("📌 Making an API call for heuristics...");
-      // const heuristicResponse = await fetchOpenAIResponse({
-      //   messages: [
-      //     {
-      //       role: "user",
-      //       content: JSON.stringify(screenshots),
-      //     },
-      //     {
-      //       role: "assistant",
-      //       content: REGISTER_HEURISTIC_PROMPT,
-      //     },
-      //   ],
-      //   json_response: true,
-      // });
-      // const heuristicResponses = JSON.parse(
-      //   heuristicResponse.choices[0].message.content
-      // );
-      // fs.writeFileSync(
-      //   `heuristic_ans - ${new Date().getTime()}.json`,
-      //   JSON.stringify(heuristicResponses, null, 2)
-      // );
-      // console.log("Register Journey Ended");
+      await typeTextInForm(formFields, validData, page);
+      await page.screenshot({
+        fullPage: true,
+        path: `images/stake/after-type.png`,
+      });
+      const afterTypeForm = await page.screenshot({
+        fullPage: true,
+        encoding: "base64",
+      });
+      screenshots.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/png;base64, ${afterTypeForm}`,
+        },
+      });
+      await page.keyboard.press("Enter");
+      await page.screenshot({
+        fullPage: true,
+        path: `images/stake/after-submit.png`,
+      });
+      const afterSubmitForm = await page.screenshot({
+        fullPage: true,
+        encoding: "base64",
+      });
+      screenshots.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/png;base64, ${afterSubmitForm}`,
+        },
+      });
+      console.log("📌 Making an API call for heuristics...");
+      const heuristicResponse = await fetchOpenAIResponse({
+        messages: [
+          {
+            role: "user",
+            content: JSON.stringify(screenshots),
+          },
+          {
+            role: "assistant",
+            content: REGISTER_HEURISTIC_PROMPT,
+          },
+        ],
+        json_response: true,
+      });
+      const heuristicResponses = JSON.parse(
+        heuristicResponse.choices[0].message.content
+      );
+      fs.writeFileSync(
+        `heuristic_ans - ${new Date().getTime()}.json`,
+        JSON.stringify(heuristicResponses, null, 2)
+      );
+      console.log("Register Journey Ended");
     } catch (error) {
       console.log(error);
     }
@@ -209,5 +205,5 @@ export const registerJourney = async (url, stage) => {
   }
 };
 
-registerJourney("https://www.stake.com", "LOGIN");
+registerJourney("https://www.stake.com");
 // registerJourney("https://www.pinnacle.com");
