@@ -11,7 +11,7 @@ app.use(cors());
 
 app.use('/', router);
 
-const PORT = process.env.API_PORT;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log('=================================');
     console.log(`🚀 App listening on the port ${PORT}`);
