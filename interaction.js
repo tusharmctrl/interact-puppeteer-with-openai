@@ -22,7 +22,6 @@ const fillFormElements = async (page, elements) => {
     const { location, value } = element;
     const { x, y } = location;
 
-    console.log("Test ", x, y, value, element);
     await page.evaluate(
       async (x, y, value) => {
         await new Promise((resolve) => setTimeout(() => resolve(), 1000));
