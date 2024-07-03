@@ -18,8 +18,9 @@ const grabAScreenshot = async (page, ssName) => {
 
 const fillFormElements = async (page, elements) => {
   for (const element of elements) {
-    const { x, y, value } = element;
-
+    const { location, value } = element;
+    const {x , y} = location;
+    
     await page.evaluate(
       async (x, y, value) => {
         await new Promise((resolve) => setTimeout(() => resolve(), 1000));
