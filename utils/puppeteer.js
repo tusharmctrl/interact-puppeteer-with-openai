@@ -1,6 +1,8 @@
 import { connect } from "puppeteer-real-browser";
 import cheerio from "cheerio";
 import { sleep } from "./helpers.js";
+import { prompt2 } from "../constants/prompts.js";
+import { generalOpenAIResponse } from "../services/openai.js";
 // import puppeteer from "puppeteer";
 export async function start_browser() {
   let page_loaded = false;
@@ -20,7 +22,7 @@ export async function start_browser() {
   });
   const page = await browser.newPage();
   **/
-  
+
   await page.setViewport({
     width: 1920,
     height: 1080,
@@ -393,20 +395,18 @@ export function make_tag(element) {
   return obj;
 }
 
-const selectOption = async (page , dropdownSelector ,element) => {
-  
+const selectOption = async (page, dropdownSelector, element) => {
   const options = await page.evaluate((dropdownSelector) => {
     const selectElement = document.querySelector(dropdownSelector);
-    console.log("selectElement.options ",selectElement.options)
-    return Array.from(selectElement.options).map(
-      (option) => option.value
-    );
+    console.log("selectElement.options ", selectElement.options);
+    return Array.from(selectElement.options).map((option) => option.value);
   }, dropdownSelector);
 
   const filteredOptions = options.filter((option) => option !== "");
-  const randomOption = filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
+  const randomOption =
+    filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
   await element.select(randomOption);
-}
+};
 
 export async function typeTextInForm(formFields, data, page) {
   for (const field of formFields) {
@@ -425,7 +425,7 @@ export async function typeTextInForm(formFields, data, page) {
           if (inputType === "checkbox") {
             await element.evaluate((el) => el.click());
           } else if (inputType === "radio") {
-            const radios = formFields.filter(e => e.type === "radio");
+            const radios = formFields.filter((e) => e.type === "radio");
             element.type(radios[0].value);
           } else if (inputType === "hidden") {
           } else {
@@ -435,11 +435,220 @@ export async function typeTextInForm(formFields, data, page) {
           await element.type(value);
         } else if (tagName === "select") {
           const dropdownSelector = `select[name="${field.name}"]`;
-          await selectOption(page,dropdownSelector,element)
+          await selectOption(page, dropdownSelector, element);
         }
       } else {
-        console.error(`Element with field name or id '${field.name}' not found.`);
+        console.error(
+          `Element with field name or id '${field.name}' not found.`
+        );
       }
     }
   }
 }
+export const grabAScreenshot = async (page, ssName) => {
+  await page.screenshot({
+    fullPage: true,
+    path: ssName,
+  });
+  const ss = await page.screenshot({
+    fullPage: true,
+    encoding: "base64",
+  });
+  return ss;
+};
+
+export const fillForm = async (page) => {
+  try {
+    const fillFormElements = async (page, elements) => {
+      for (const element of elements) {
+        const { location, value } = element;
+        const { x, y } = location;
+
+        console.log("Test ", x, y, value, element);
+        await page.evaluate(
+          async (x, y, value) => {
+            await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+
+            // get coordinates
+            const cords = [];
+            await (async () => {
+              const getCenterCoordinates = async (element) => {
+                const rect = element.getBoundingClientRect();
+                return {
+                  x: rect.left + rect.width / 2,
+                  y: rect.top + rect.height / 2,
+                  element,
+                };
+              };
+              // form elements in DOM
+              const inputs = document.querySelectorAll(
+                'input:not([type="hidden"],[type="file"]), select, textarea'
+              );
+              for (const input of inputs) {
+                cords.push(await getCenterCoordinates(input));
+              }
+
+              // Shadow DOM elements
+              const detectFormElementsInShadowDOM = async (element) => {
+                const cords = [];
+                if (element.shadowRoot) {
+                  const inputs = element.shadowRoot.querySelectorAll(
+                    'input:not([type="hidden"],[type="file"]), select, textarea'
+                  );
+                  for (const input of inputs) {
+                    cords.push(await getCenterCoordinates(input));
+                  }
+                  // Recursively check the Shadow DOM
+                  for (const child of element.shadowRoot.children) {
+                    cords.push(...(await detectFormElementsInShadowDOM(child)));
+                  }
+                }
+
+                for (const child of element.children) {
+                  cords.push(...(await detectFormElementsInShadowDOM(child)));
+                }
+
+                return cords;
+              };
+              for (const child of document.body.children) {
+                cords.push(...(await detectFormElementsInShadowDOM(child)));
+              }
+            })();
+            console.log(cords);
+            const fillFormValue = async (element, value) => {
+              if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
+                element.focus();
+                element.value = value;
+              }
+            };
+            let elementInfo = cords.find((item) => item.x == x && item.y == y);
+            console.log("x , y ", x, y, cords, elementInfo);
+            if (elementInfo) {
+              fillFormValue(elementInfo.element, value);
+            } else {
+              console.log(elementInfo);
+            }
+          },
+          x,
+          y,
+          value
+        );
+      }
+    };
+    // !TODO: for now this is statically configured for william hills, we need to change this to dynamic.
+    const registerPageIframe = await page.$(".cp-reg-iframe");
+    const registerFrame = await registerPageIframe.contentFrame();
+    const iframeRect = await registerPageIframe.boundingBox();
+
+    const inputsWithinIframe = await registerFrame.evaluate(
+      async (iframeRect) => {
+        const getCenterCoordinates = (element, iframeRect) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            x: iframeRect.x + rect.left + rect.width / 2,
+            y: iframeRect.y + rect.top + rect.height / 2,
+            element: element.parentElement.outerHTML,
+          };
+        };
+
+        const tempCords = [];
+        const neededInputs = document.querySelectorAll(
+          'input:not([type="hidden"],[type="file"]), select, textarea'
+        );
+        for (const input of neededInputs) {
+          tempCords.push(getCenterCoordinates(input, iframeRect));
+        }
+        return tempCords;
+      },
+      iframeRect
+    );
+    const coordinates = await page.evaluate(async () => {
+      const cords = [];
+      const getCenterCoordinates = async (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          element: element.parentElement.outerHTML,
+        };
+      };
+
+      const detectFormElementsInShadowDOM = async (element) => {
+        const cords = [];
+        if (element.shadowRoot) {
+          const inputs = element.shadowRoot.querySelectorAll(
+            'input:not([type="hidden"],[type="file"]), select, textarea'
+          );
+          for (const input of inputs) {
+            cords.push(await getCenterCoordinates(input));
+          }
+          // Recursively check the Shadow DOM
+          for (const child of element.shadowRoot.children) {
+            cords.push(...(await detectFormElementsInShadowDOM(child)));
+          }
+        }
+
+        for (const child of element.children) {
+          cords.push(...(await detectFormElementsInShadowDOM(child)));
+        }
+
+        return cords;
+      };
+
+      console.log(
+        "2.1. first approach grabbing the elements through DOM traversal"
+      );
+      // Direct DOM traversal
+      const inputs = document.querySelectorAll(
+        'input:not([type="hidden"],[type="file"]), select, textarea'
+      );
+      for (const input of inputs) {
+        cords.push(await getCenterCoordinates(input));
+      }
+
+      console.log(
+        "2.2. second approach grabbing the elements from the shadow DOM"
+      );
+      // Shadow DOM elements
+      for (const child of document.body.children) {
+        cords.push(...(await detectFormElementsInShadowDOM(child)));
+      }
+
+      return cords;
+    }, registerFrame);
+
+    const finalCords = [...coordinates, ...inputsWithinIframe];
+    const filteredCords = finalCords
+      .filter((item) => item.x !== 0 && item.y !== 0)
+      .map((item) => {
+        if (item.element.length > 10000) {
+          return {
+            ...item,
+            element: item.element.substr(0, 10000),
+          };
+        }
+        return item;
+      });
+
+    console.log("Form Element Coordinates:", filteredCords);
+
+    const gptPrompt = prompt2(filteredCords);
+    const gptResponse = await generalOpenAIResponse(gptPrompt);
+    console.log(
+      "gpt response for coordinates:",
+      gptResponse.choices[0].message.content
+    );
+    const responseJson = JSON.parse(gptResponse.choices[0].message.content);
+    if (responseJson.fields) {
+      await fillFormElements(registerFrame, responseJson.fields);
+      await grabAScreenshot(page, "submit.png");
+      return {
+        data: gptResponse,
+        success: true,
+        message: "Successfully Filled Up Form",
+      };
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};

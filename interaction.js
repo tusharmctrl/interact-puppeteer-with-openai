@@ -4,6 +4,7 @@ import { prompt2 } from "./constants/prompts.js";
 import { generalOpenAIResponse } from "./services/openai.js";
 import { sleep } from "./utils/helpers.js";
 import "dotenv/config";
+import puppeteer from "puppeteer";
 const grabAScreenshot = async (page, ssName) => {
   await page.screenshot({
     fullPage: true,
@@ -18,8 +19,10 @@ const grabAScreenshot = async (page, ssName) => {
 
 const fillFormElements = async (page, elements) => {
   for (const element of elements) {
-    const { x, y, value } = element;
+    const { location, value } = element;
+    const { x, y } = location;
 
+    console.log("Test ", x, y, value, element);
     await page.evaluate(
       async (x, y, value) => {
         await new Promise((resolve) => setTimeout(() => resolve(), 1000));
@@ -77,8 +80,8 @@ const fillFormElements = async (page, elements) => {
           }
         };
         let elementInfo = cords.find((item) => item.x == x && item.y == y);
+        console.log("x , y ", x, y, cords, elementInfo);
         if (elementInfo) {
-          console.log("filling the value : ", value);
           fillFormValue(elementInfo.element, value);
         } else {
           console.log(elementInfo);
@@ -102,17 +105,30 @@ const main = async (url) => {
     devtools: true,
     // args: ['--auto-open-devtools-for-tabs']
   });
+
+  //   const browser = await puppeteer.launch({
+  //     headless: false,
+  //   });
+  //   const page = await browser.newPage();
+  await page.setViewport({
+    width: 1920,
+    height: 3000,
+    deviceScaleFactor: 1,
+  });
   try {
     console.log("1. Opened a browser and visiting the url : ", url);
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const joinButton = await page.$(".action-registration__button");
-    await joinButton.evaluate((btn) => btn.click());
-    await new Promise((resolve) => setTimeout(resolve, 7000));
+    // only to be executed in williamhills
+    // const joinButton = await page.$(".action-registration__button");
+    // await joinButton.evaluate((btn) => btn.click());
+    // await new Promise((resolve) => setTimeout(resolve, 7000));
     console.log(
       "2. Start finding coordinates of all the visible form elements"
     );
+    // const registerPageIframe = await page.$("#JotFormIFrame-223494403132953");
     const registerPageIframe = await page.$(".cp-reg-iframe");
+
     const registerFrame = await registerPageIframe.contentFrame();
     const iframeRect = await registerPageIframe.boundingBox();
 
@@ -234,4 +250,5 @@ const main = async (url) => {
 // main("https://stake.com/?tab=register&modal=auth");
 // main("https://signup.pinnacle.com/");
 // main("https://www.dafabet.com/in/join?regvia=2");
+// main("https://kycoolheat.com/");
 main("https://www.williamhill.com/");
