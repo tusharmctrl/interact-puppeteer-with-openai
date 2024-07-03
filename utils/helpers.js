@@ -93,7 +93,9 @@ export async function singleLineInput(text) {
 
 export const getFormFields = async (page) => {
   try {
-    const formElement = await page.waitForSelector("form");
+    // const formElement = await page.waitForSelector("form");
+    const formElement = await page.$("form");
+
 
     const fields = await formElement.$$eval(
       "input, select, textarea",
@@ -105,7 +107,7 @@ export const getFormFields = async (page) => {
           value: element.value,
         }));
       }
-    );
+    ) || [];
 
     return {formFields : fields  };
   } catch (error) {

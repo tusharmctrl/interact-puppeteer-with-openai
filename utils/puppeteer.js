@@ -20,7 +20,7 @@ export async function start_browser() {
   });
   const page = await browser.newPage();
   **/
-
+  
   await page.setViewport({
     width: 1920,
     height: 1080,
@@ -393,6 +393,21 @@ export function make_tag(element) {
   return obj;
 }
 
+const selectOption = async (page , dropdownSelector ,element) => {
+  
+  const options = await page.evaluate((dropdownSelector) => {
+    const selectElement = document.querySelector(dropdownSelector);
+    console.log("selectElement.options ",selectElement.options)
+    return Array.from(selectElement.options).map(
+      (option) => option.value
+    );
+  }, dropdownSelector);
+
+  const filteredOptions = options.filter((option) => option !== "");
+  const randomOption = filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
+  await element.select(randomOption);
+}
+
 export async function typeTextInForm(formFields, data, page) {
   for (const field of formFields) {
     if (field.name && field.name.trim() !== "") {
@@ -420,17 +435,7 @@ export async function typeTextInForm(formFields, data, page) {
           await element.type(value);
         } else if (tagName === "select") {
           const dropdownSelector = `select[name="${field.name}"]`;
-          console.log(field.name);
-          const options = await page.evaluate((dropdownSelector) => {
-            const selectElement = document.querySelector(dropdownSelector);
-            return Array.from(selectElement.options).map(
-              (option) => option.value
-            );
-          }, dropdownSelector);
-          const filteredOptions = options.filter((option) => option !== "");
-          const randomOption =
-            filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
-          await page.select(dropdownSelector, randomOption);
+          await selectOption(page,dropdownSelector,element)
         }
       } else {
         console.error(`Element with field name or id '${field.name}' not found.`);
