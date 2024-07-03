@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "title": "Ensure that the 'Sign In' button is easy to see on every page of the website.",
+      "observation": "The 'Sign In' button is located at the top right corner of the website on almost all the pages.",
+      "result": "passed",
+      "suggestions": "No action needed. The 'Sign In' button is in a noticeable spot on every page."
+    },
+    {
+      "title": "Ensure that the 'Sign In' button is easy to see on every page of the website. Additionally, users should be able to sign in using a combination of their username or email and password.",
+      "observation": "The 'Sign In' button is visible on every page and clicking it opens a modal where users can enter their username or email and password to sign in.",
+      "result": "passed",
+      "suggestions": "No additional changes needed. The current setup allows users to sign in using either username or email."
+    },
+    {
+      "title": "Ensure there is an accessible and straightforward process for users to recover forgotten passwords.",
+      "observation": "There is a 'Forgot your login details?' link present in the 'Sign In' modal which redirects users to recover their password.",
+      "result": "passed",
+      "suggestions": "Consider making the 'Forgot your login details?' link more prominent for better visibility."
+    },
+    {
+      "title": "Ensure there is an accessible and straightforward process for users who have forgotten their email addresses.",
+      "observation": "The 'Forgot your login details?' link is available, but it is not explicitly clear if it helps in recovering email addresses as well.",
+      "result": "couldn't determine",
+      "suggestions": "Clarify the process for recovering forgotten email addresses within the 'Forgot your login details?' section."
+    },
+    {
+      "title": "Ensure there is an option for users to 'Remember My Details'.",
+      "observation": "The 'Remember my details' option is available in the 'Sign In' modal.",
+      "result": "passed",
+      "suggestions": "No action needed. The 'Remember my details' option is prominently available."
+    },
+    {
+      "title": "Ensure the site features helpful error messaging that triggers only when fields are incorrectly input, ensuring users receive clear guidance to correct mistakes effectively.",
+      "observation": "An error message appears when incorrect login details are entered, explaining that the username and/or password is incorrect.",
+      "result": "passed",
+      "suggestions": "Ensure error messages are specific and provide guidance on how to rectify the issue. Current messages meet the criteria."
+    },
+    {
+      "title": "Ensure CAPTCHA or other anti-bot measures are implemented during sign-in to enhance security and prevent automated attacks, thereby safeguarding user accounts and maintaining the integrity of the login process.",
+      "observation": "No CAPTCHA or anti-bot measure is observed in the sign-in process through the screenshots.",
+      "result": "failed",
+      "suggestions": "Implement CAPTCHA or similar anti-bot measures during the sign-in process to enhance security."
+    },
+    {
+      "title": "Ensure that error messaging is clear and concise, providing users with specific reasons for the error encountered and clear instructions on the next steps to resolve the issue effectively.",
+      "observation": "Error messages provide clear information about incorrect username or password.",
+      "result": "passed",
+      "suggestions": "Ensure all error messages maintain clarity and provide specific guidance. Current implementation is effective."
+    }
+  ]
+}

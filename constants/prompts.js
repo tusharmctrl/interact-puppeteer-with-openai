@@ -187,3 +187,77 @@ This approach prevents confusion and enhances user experience by facilitating sm
 
 These are the heuristics which needs to be tested.
 `;
+
+export const prompt = (cords) => `Task Description:
+I have a set of coordinates that correspond to form elements on a webpage. I need to identify the type of form element (e.g., textbox, selectbox, checkbox, radio button) at each coordinate and generate a sample value for each form element. Here are the specific instructions:
+
+1. Identify Form Elements:
+- For each coordinate, locate the corresponding form element on the provided screenshot of the webpage.
+- Determine the type of form element at each coordinate.
+
+2. Generate Output:
+- Create an array of objects, where each object has the following keys:
+-- location: An object with x and y coordinates.
+-- element_type: A string indicating the type of form element (e.g., "textbox", "selectbox", "checkbox", "radio button").
+-- value: A sample value relevant to the type of form element.
+
+3. Handling Non-form Elements:
+- If a coordinate does not correspond to a form element, skip it and do not include it in the output array.
+
+Example Output in json array format:
+###
+{
+    fields: [
+        {
+            "location": {"x": 875, "y": -1476},
+            "element_type": "selectbox",
+            "value": "Country of residence"
+        },
+        {
+            "location": {"x": 1063, "y": -1476},
+            "element_type": "selectbox",
+            "value": "Currency"
+        },
+        {
+            "location": {"x": 951.5, "y": -1420},
+            "element_type": "textbox",
+            "value": "test@example.com"
+        },
+        // ... additional objects for other coordinates
+    ]
+}
+###
+
+Coordinates and Screenshot:
+Coordinates:
+###
+${JSON.stringify(cords)}
+###
+
+Screenshot is attached in the prompt
+
+Notes:
+- Ensure accuracy by cross-referencing each coordinate with the corresponding form element in the screenshot. please go through all the coordinates precisely and make sure you only recommend what you see on any given coordinates, don't just assume the next field and provide the value irrespective of the coordinates. Also don't skip/change the field if you see same field type of different coordinates. I want accurate field value and element_type on each given coordinate that shouldn't be impected by your knowledge base of other form layouts.
+- Use realistic dummy values for the form elements based on their type in the json response.`;
+
+export const prompt2 = (cords) => `
+I am attaching here a bunch of coordinates I have extracted of all the form elements on the page and also attaching the screenshot of the page.
+You need to go through all this coordinates and find the loaction of the same on hte screenshot, on the given coordinate if you see a possible form element then create a relevant value for it.
+If given loaction doesn't look like a form element then just skip it. Just search each coordinate one by one and generate value relevant
+to what you see at that location, strictly do not merge two field, don't just assume the next field and provide the value irrespective of the coordinates.
+
+All I want in output is json array of objects, where object will have following keys and object represent each coordinates
+
+{
+    fields: [
+        {
+            loaction: {x:0,u:0},
+            element_type: "textbox" // textbox, selectbox, checkbox, radiobutton, textarea
+            value: "John"
+        }
+    ]
+}
+
+Here's the json of the coordinates
+${JSON.stringify(cords, "", 1)}
+`;

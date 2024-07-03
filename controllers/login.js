@@ -1,17 +1,20 @@
-import { functionDefinitions, LOGIN_HEURISTIC_PROMPT } from "../constants/prompts.js";
+import {
+  functionDefinitions,
+  LOGIN_HEURISTIC_PROMPT,
+} from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
 import { singleLineInput, sleep, generalResponse } from "../utils/helpers.js";
 import {
   get_page_content,
   get_tabbable_elements,
   start_browser,
-  wait_for_navigation
+  wait_for_navigation,
 } from "../utils/puppeteer.js";
-import fs from "fs"
+import fs from "fs";
 export const loginJourney = async (req, res) => {
   try {
-    const email = "TestDeveloper"
-    const password = "Test@1"
+    const email = "TestDeveloper";
+    const password = "Test@1";
     const url = req.query.url;
     const { browser, page } = await start_browser();
     await page.setViewport({
@@ -23,7 +26,7 @@ export const loginJourney = async (req, res) => {
       waitUntil: "domcontentloaded",
     });
     // waiting for 25 secs - just to make sure we are loading all the necessary things initially.
-    await sleep(25000);
+    await sleep(15000);
     await page.screenshot({
       fullPage: true,
       path: `images/stake/home.png`,
@@ -83,6 +86,7 @@ export const loginJourney = async (req, res) => {
       const formFields = await page.$$eval("form input", (elements) =>
         elements.map((element) => element.name || element.id)
       );
+      console.log(formFields);
       for (const field of formFields) {
         const element = await page.$(
           `input[name="${field}"], input[id="${field}"]`
@@ -93,7 +97,10 @@ export const loginJourney = async (req, res) => {
             element
           );
           if (tagName === "input") {
-            if (field.toLowerCase().includes("email")) {
+            if (
+              field.toLowerCase().includes("email") ||
+              field.toLowerCase().includes("username")
+            ) {
               await element.type(email);
             } else if (field.toLowerCase().includes("password")) {
               await element.type(password);
@@ -167,14 +174,20 @@ export const loginJourney = async (req, res) => {
         `login_heuristic_ans - ${new Date().getTime()}.json`,
         JSON.stringify(heuristicResponses, null, 2)
       );
-      return generalResponse(res, { evaluationResult: heuristicResponses }, "Successfully Completed Login Journey", 'success', true, 200);
+      return generalResponse(
+        res,
+        { evaluationResult: heuristicResponses },
+        "Successfully Completed Login Journey",
+        "success",
+        true,
+        200
+      );
     } catch (e) {
       console.log(e);
     } finally {
-      await browser.close()
+      await browser.close();
     }
   } catch (error) {
     throw error;
   }
 };
-
