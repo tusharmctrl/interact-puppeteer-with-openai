@@ -74,9 +74,9 @@ const fillFormElements = async (page, elements) => {
             element.value = value;
           }
         };
-        
+
         let elementInfo = cords.find((item) => item.x == x && item.y == y);
-        console.log("found element :: ",x ,y , elementInfo)
+        console.log("found element :: ", x, y, elementInfo);
         if (elementInfo) {
           fillFormValue(elementInfo.element, value);
         }
@@ -89,36 +89,22 @@ const fillFormElements = async (page, elements) => {
 };
 
 const main = async (url) => {
-//     const { browser, page } = await connect({
-//     // headless: false,
-//     // turnstile: true,
-//     // fingerprint: true,
-//     // connectOption: {
-//     //   protocolTimeout: 1800000,
-//     // },
-//     // devtools: true,
-//     // args: ['--auto-open-devtools-for-tabs']
-//   });
-
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
   });
   const page = await browser.newPage();
   await page.setViewport({
     width: 1920,
     height: 1080,
     deviceScaleFactor: 1,
-    
   });
 
   try {
     console.log("1. Opened a browser and visiting the url : ", url);
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    
     await new Promise((resolve) => setTimeout(resolve, 5000));
     let registerPageIframe = null;
-    if(url === "https://www.williamhill.com/") {
-      
+    if (url === "https://www.williamhill.com/") {
       // await new Promise((resolve) => setTimeout(resolve, 5000));
       // only to be executed in williamhills
       const joinButton = await page.$(".action-registration__button");
@@ -128,7 +114,7 @@ const main = async (url) => {
         "2. Start finding coordinates of all the visible form elements"
       );
       registerPageIframe = await page.$(".cp-reg-iframe");
-    } else if(url === "https://kycoolheat.com/") {
+    } else if (url === "https://kycoolheat.com/") {
       registerPageIframe = await page.$("#JotFormIFrame-223494403132953");
     }
 
@@ -143,7 +129,7 @@ const main = async (url) => {
           element: element.outerHTML,
         };
       };
-    
+
       const tempCords = [];
       const neededInputs = document.querySelectorAll(
         'input:not([type="hidden"],[type="file"]), select, textarea'

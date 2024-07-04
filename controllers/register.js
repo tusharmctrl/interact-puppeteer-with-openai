@@ -1,25 +1,28 @@
+import puppeteer from "puppeteer";
 import {
   REGISTER_HEURISTIC_PROMPT,
   functionDefinitions,
 } from "../constants/prompts.js";
 import { fetchOpenAIResponse } from "../services/openai.js";
-import { getFormFields, sleep, generalResponse } from "../utils/helpers.js";
+import { sleep, generalResponse } from "../utils/helpers.js";
 import {
   fillForm,
+  fillFormInsideIframe,
   get_page_content,
   get_tabbable_elements,
+  grabAScreenshot,
   start_browser,
-  typeTextInForm,
   wait_for_navigation,
 } from "../utils/puppeteer.js";
-import dotenv from "dotenv";
+import "dotenv/config";
 import fs from "fs";
-dotenv.config();
 
 export const registerJourney = async (req, res) => {
   try {
     const url = req.query.url;
-    const { browser, page } = await start_browser();
+    // const { browser, page } = await start_browser();
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage();
     await page.setViewport({
       width: 1920,
       height: 1080,
@@ -60,7 +63,6 @@ export const registerJourney = async (req, res) => {
     const link = links_and_inputs.find(
       (elem) => elem && elem.id == args.pgpt_id
     );
-    console.log(link);
     try {
       /**
        * Once we receive the pgpt_id from GPT for the respected register button - we're making it click through puppeteer.
@@ -76,28 +78,21 @@ export const registerJourney = async (req, res) => {
       await wait_for_navigation(page);
       const currentUrl = await page.url();
       console.log("📌 Link clicked! You are now on " + currentUrl);
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/before-typing-data.png`,
-      });
-      const base64Image = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
+      const beforeTypingSS = await grabAScreenshot(
+        page,
+        "images/stake/before-typing-data.png"
+      );
       /**
        * Here we're submitting the form without filling up any values -- so it can generate errors and we can test
        * our heuristics related to errors.
        */
       await page.keyboard.press("Enter");
-      const errorImage = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
+      const errorImage = await grabAScreenshot(page, "images/stake/error.png");
       screenshots.push(
         {
           type: "image_url",
           image_url: {
-            url: `data:image/png;base64, ${base64Image}`,
+            url: `data:image/png;base64, ${beforeTypingSS}`,
           },
         },
         {
@@ -107,32 +102,34 @@ export const registerJourney = async (req, res) => {
           },
         }
       );
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/errors.png`,
-      });
 
       /**
        * Here - we'll write our code for typing values in to the form.
        */
-
       const responseOfFillingForm = await fillForm(page);
-      console.log(responseOfFillingForm);
-      await page.keyboard.press("Enter");
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/after-submit.png`,
-      });
-      const afterSubmitForm = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
-      screenshots.push({
-        type: "image_url",
-        image_url: {
-          url: `data:image/png;base64, ${afterSubmitForm}`,
-        },
-      });
+      if (responseOfFillingForm.success) {
+        const fillingFormSS = await grabAScreenshot(
+          page,
+          "images/stake/after-filling.png"
+        );
+        screenshots.push({
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${fillingFormSS}`,
+          },
+        });
+        await page.keyboard.press("Enter");
+        const submitSS = await grabAScreenshot(
+          page,
+          "images/stake/after-submit.png"
+        );
+        screenshots.push({
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${submitSS}`,
+          },
+        });
+      }
       console.log("📌 Making an API call for heuristics...");
       const heuristicResponse = await fetchOpenAIResponse({
         messages: [
@@ -151,11 +148,10 @@ export const registerJourney = async (req, res) => {
         heuristicResponse.choices[0].message.content
       );
       fs.writeFileSync(
-        `heuristic_ans - ${new Date().getTime()}.json`,
+        `Register_Journey - ${new Date().getTime()}.json`,
         JSON.stringify(heuristicResponses, null, 2)
       );
-
-      console.log("Register Journey Ended");
+      console.log("📌 Register Journey Finished...");
       return generalResponse(
         res,
         { evaluationResult: heuristicResponses },
@@ -167,7 +163,7 @@ export const registerJourney = async (req, res) => {
     } catch (error) {
       console.log(error);
     } finally {
-      await browser.close();
+      // await browser.close();
     }
   } catch (error) {
     console.log(error);

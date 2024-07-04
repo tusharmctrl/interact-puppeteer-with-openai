@@ -463,12 +463,9 @@ export const fillForm = async (page) => {
       for (const element of elements) {
         const { location, value } = element;
         const { x, y } = location;
-
-        console.log("Test ", x, y, value, element);
         await page.evaluate(
           async (x, y, value) => {
             await new Promise((resolve) => setTimeout(() => resolve(), 1000));
-
             // get coordinates
             const cords = [];
             await (async () => {
@@ -514,7 +511,6 @@ export const fillForm = async (page) => {
                 cords.push(...(await detectFormElementsInShadowDOM(child)));
               }
             })();
-            console.log(cords);
             const fillFormValue = async (element, value) => {
               if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
                 element.focus();
@@ -525,8 +521,6 @@ export const fillForm = async (page) => {
             console.log("x , y ", x, y, cords, elementInfo);
             if (elementInfo) {
               fillFormValue(elementInfo.element, value);
-            } else {
-              console.log(elementInfo);
             }
           },
           x,
@@ -535,33 +529,7 @@ export const fillForm = async (page) => {
         );
       }
     };
-    // !TODO: for now this is statically configured for william hills, we need to change this to dynamic.
-    const registerPageIframe = await page.$(".cp-reg-iframe");
-    const registerFrame = await registerPageIframe.contentFrame();
-    const iframeRect = await registerPageIframe.boundingBox();
 
-    const inputsWithinIframe = await registerFrame.evaluate(
-      async (iframeRect) => {
-        const getCenterCoordinates = (element, iframeRect) => {
-          const rect = element.getBoundingClientRect();
-          return {
-            x: iframeRect.x + rect.left + rect.width / 2,
-            y: iframeRect.y + rect.top + rect.height / 2,
-            element: element.parentElement.outerHTML,
-          };
-        };
-
-        const tempCords = [];
-        const neededInputs = document.querySelectorAll(
-          'input:not([type="hidden"],[type="file"]), select, textarea'
-        );
-        for (const input of neededInputs) {
-          tempCords.push(getCenterCoordinates(input, iframeRect));
-        }
-        return tempCords;
-      },
-      iframeRect
-    );
     const coordinates = await page.evaluate(async () => {
       const cords = [];
       const getCenterCoordinates = async (element) => {
@@ -615,10 +583,9 @@ export const fillForm = async (page) => {
       }
 
       return cords;
-    }, registerFrame);
+    });
 
-    const finalCords = [...coordinates, ...inputsWithinIframe];
-    const filteredCords = finalCords
+    const filteredCords = coordinates
       .filter((item) => item.x !== 0 && item.y !== 0)
       .map((item) => {
         if (item.element.length > 10000) {
@@ -640,15 +607,149 @@ export const fillForm = async (page) => {
     );
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
     if (responseJson.fields) {
-      await fillFormElements(registerFrame, responseJson.fields);
+      await fillFormElements(page, responseJson.fields);
       await grabAScreenshot(page, "submit.png");
       return {
         data: gptResponse,
         success: true,
+        isFormInsideIframe: false,
         message: "Successfully Filled Up Form",
       };
     }
   } catch (error) {
     console.log(error);
+  }
+};
+
+export const fillFormInsideIframe = async (page) => {
+  try {
+    const fillFormElementsOfIframe = async (page, elements) => {
+      const elementData = elements.map(({ location, value }) => ({
+        x: location.x,
+        y: location.y,
+        value,
+      }));
+
+      await page
+        .evaluate(async (elementData) => {
+          const sleep = (ms) =>
+            new Promise((resolve) => setTimeout(resolve, ms));
+
+          const getCenterCoordinates = (element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+              element,
+            };
+          };
+
+          const detectFormElementsInShadowDOM = async (element) => {
+            const cords = [];
+            if (element.shadowRoot) {
+              const inputs = element.shadowRoot.querySelectorAll(
+                'input:not([type="hidden"],[type="file"]), select, textarea'
+              );
+              for (const input of inputs) {
+                cords.push(getCenterCoordinates(input));
+              }
+              for (const child of element.shadowRoot.children) {
+                cords.push(...(await detectFormElementsInShadowDOM(child)));
+              }
+            }
+            for (const child of element.children) {
+              cords.push(...(await detectFormElementsInShadowDOM(child)));
+            }
+            return cords;
+          };
+
+          const fillFormValue = (element, value) => {
+            if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
+              element.focus();
+              element.value = value;
+              element.dispatchEvent(new Event("input", { bubbles: true }));
+              element.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+          };
+
+          const cords = [];
+          const inputs = document.querySelectorAll(
+            'input:not([type="hidden"],[type="file"]), select, textarea'
+          );
+          for (const input of inputs) {
+            cords.push(getCenterCoordinates(input));
+          }
+          for (const child of document.body.children) {
+            cords.push(...(await detectFormElementsInShadowDOM(child)));
+          }
+
+          elementData.forEach(({ x, y, value }) => {
+            const elementInfo = cords.find(
+              (item) => item.x === x && item.y === y
+            );
+            console.log("found element :: ", x, y, elementInfo);
+            if (elementInfo) {
+              fillFormValue(elementInfo.element, value);
+            } else {
+              console.error("Element not found at coordinates: ", x, y);
+            }
+          });
+
+          await sleep(500);
+        }, elementData)
+        .catch((err) => {
+          console.error("Error during form filling:", err);
+        });
+    };
+    // statically configured for iframe only - website: williamhill.com
+    const registerPageIframe = await page.$(".cp-reg-iframe");
+    const registerFrame = await registerPageIframe.contentFrame();
+    const inputsWithinIframe = await registerFrame.evaluate(() => {
+      const getCenterCoordinates = (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          element: element.outerHTML,
+        };
+      };
+
+      const tempCords = [];
+      const neededInputs = document.querySelectorAll(
+        'input:not([type="hidden"],[type="file"]), select, textarea'
+      );
+      for (const input of neededInputs) {
+        tempCords.push(getCenterCoordinates(input));
+      }
+      return tempCords;
+    });
+
+    const filteredCords = inputsWithinIframe
+      .filter((item) => item.x !== 0 && item.y !== 0)
+      .map((item) => {
+        if (item.element.length > 10000) {
+          return {
+            ...item,
+            element: item.element.substr(0, 10000),
+          };
+        }
+        return item;
+      });
+
+    console.log("Form Element Coordinates:", filteredCords);
+
+    const gptPrompt = prompt2(filteredCords);
+    const gptResponse = await generalOpenAIResponse(gptPrompt);
+    const responseJson = JSON.parse(gptResponse.choices[0].message.content);
+    if (responseJson.fields) {
+      await fillFormElementsOfIframe(registerFrame, responseJson.fields);
+      return {
+        data: responseJson.fields,
+        success: true,
+        message: "Successfully Filled Up Form",
+      };
+    }
+  } catch (e) {
+    console.log(e);
   }
 };
