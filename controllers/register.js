@@ -20,9 +20,9 @@ import fs from "fs";
 export const registerJourney = async (req, res) => {
   try {
     const url = req.query.url;
-    // const { browser, page } = await start_browser();
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
+    const { browser, page } = await start_browser();
+    // const browser = await puppeteer.launch({ headless: false });
+    // const page = await browser.newPage();
     await page.setViewport({
       width: 1920,
       height: 1080,
@@ -107,6 +107,7 @@ export const registerJourney = async (req, res) => {
        * Here - we'll write our code for typing values in to the form.
        */
       const responseOfFillingForm = await fillForm(page);
+      console.log(responseOfFillingForm);
       if (responseOfFillingForm.success) {
         const fillingFormSS = await grabAScreenshot(
           page,

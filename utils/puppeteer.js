@@ -2,7 +2,10 @@ import { connect } from "puppeteer-real-browser";
 import cheerio from "cheerio";
 import { sleep } from "./helpers.js";
 import { prompt2 } from "../constants/prompts.js";
-import { generalOpenAIResponse } from "../services/openai.js";
+import {
+  fetchOpenAIResponse,
+  generalOpenAIResponse,
+} from "../services/openai.js";
 // import puppeteer from "puppeteer";
 export async function start_browser() {
   let page_loaded = false;
@@ -596,16 +599,16 @@ export const fillForm = async (page) => {
         }
         return item;
       });
-
+    if (!filteredCords.length) {
+      console.log("Could not find any elements here, checking in iframe...");
+      const iframeResponse = await fillFormInsideIframe(page);
+      return iframeResponse;
+    }
     console.log("Form Element Coordinates:", filteredCords);
-
     const gptPrompt = prompt2(filteredCords);
     const gptResponse = await generalOpenAIResponse(gptPrompt);
-    console.log(
-      "gpt response for coordinates:",
-      gptResponse.choices[0].message.content
-    );
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
+    console.log("GPT Coordinates", responseJson.fields);
     if (responseJson.fields) {
       await fillFormElements(page, responseJson.fields);
       await grabAScreenshot(page, "submit.png");
@@ -701,9 +704,33 @@ export const fillFormInsideIframe = async (page) => {
           console.error("Error during form filling:", err);
         });
     };
-    // statically configured for iframe only - website: williamhill.com
-    const registerPageIframe = await page.$(".cp-reg-iframe");
-    const registerFrame = await registerPageIframe.contentFrame();
+    const frames = await page.frames();
+    const frameContents = [];
+    for (const frame of frames) {
+      try {
+        frameContents.push({ url: frame.url(), name: frame.name() });
+      } catch (e) {
+        console.log("could not load body :: ", frame.name());
+      }
+    }
+    const messageForFillUps = `Your task is to identify the iframe that contains the register form. You can use the iframe's name, or can use provided url to access the content of url and give your decision based on the same. Your response should strictly return the name of the iframe that contains the register form and nothing else.
+    Below is the data which contains url and name of iframes :
+    ${JSON.stringify(frameContents)}
+    Please analyze the data and Strictly provide the name of the iframe that contains the register form.`;
+
+    console.log("Asking GPT for a frame that consists register form..");
+    const iframeIdentification = await fetchOpenAIResponse({
+      messages: [
+        {
+          role: "system",
+          content: messageForFillUps,
+        },
+      ],
+    });
+
+    const registerFrame = frames.find(
+      (f) => f.name() === iframeIdentification.choices[0].message.content
+    );
     const inputsWithinIframe = await registerFrame.evaluate(() => {
       const getCenterCoordinates = (element) => {
         const rect = element.getBoundingClientRect();

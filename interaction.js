@@ -41,6 +41,7 @@ const fillFormElements = async (page, elements) => {
           const inputs = document.querySelectorAll(
             'input:not([type="hidden"],[type="file"]), select, textarea'
           );
+          console.log({ inputs });
           for (const input of inputs) {
             cords.push(await getCenterCoordinates(input));
           }
