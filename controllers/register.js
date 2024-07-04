@@ -164,7 +164,7 @@ export const registerJourney = async (req, res) => {
     } catch (error) {
       console.log(error);
     } finally {
-      // await browser.close();
+      await browser.close();
     }
   } catch (error) {
     console.log(error);

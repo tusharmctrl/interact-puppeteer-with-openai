@@ -515,6 +515,7 @@ export const fillForm = async (page) => {
               }
             })();
             const fillFormValue = async (element, value) => {
+              console.log({ tagName: element.tagName });
               if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
                 element.focus();
                 element.value = value;
@@ -611,7 +612,6 @@ export const fillForm = async (page) => {
     console.log("GPT Coordinates", responseJson.fields);
     if (responseJson.fields) {
       await fillFormElements(page, responseJson.fields);
-      await grabAScreenshot(page, "submit.png");
       return {
         data: gptResponse,
         success: true,
@@ -764,7 +764,6 @@ export const fillFormInsideIframe = async (page) => {
       });
 
     console.log("Form Element Coordinates:", filteredCords);
-
     const gptPrompt = prompt2(filteredCords);
     const gptResponse = await generalOpenAIResponse(gptPrompt);
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
