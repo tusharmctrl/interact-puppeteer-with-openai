@@ -1,8 +1,8 @@
 "use strict";
 import { connect } from "puppeteer-real-browser";
-import { prompt2 } from "./constants/prompts.js";
-import { generalOpenAIResponse } from "./services/openai.js";
-import { sleep } from "./utils/helpers.js";
+import { prompt2 } from "../constants/prompts.js";
+import { generalOpenAIResponse } from "../services/openai.js";
+import { sleep } from "../utils/helpers.js";
 import "dotenv/config";
 import puppeteer from "puppeteer";
 const grabAScreenshot = async (page, ssName) => {

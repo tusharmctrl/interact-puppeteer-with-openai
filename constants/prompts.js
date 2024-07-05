@@ -261,3 +261,26 @@ All I want in output is json array of objects, where object will have following 
 Here's the json of the coordinates
 ${JSON.stringify(cords, "", 1)}
 `;
+
+export const ENTRY_HOMEPAGE_HEURISTICS = `
+Based on the screenshot I have provided, Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such a JSON array object. 
+{data: [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]}
+
+You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform. 
+I want you to thoroughly examine all the screenshots I am providing you here - and based on them give an answer. 
+
+# Website Homepage Best Practices
+- Ensure the value proposition is clearly stated on the home page, prominently featuring a compelling tagline or welcome blurb. This should quickly communicate the core benefits and unique offerings of the website to new and returning users, effectively capturing their interest and encouraging further exploration.
+- Ensure the design of the home page is engaging and intuitive, encouraging visitors to explore the site further. This includes using appealing visuals, clear navigation, and strategically placed calls-to-action to guide users seamlessly through the site's offerings.
+- Ensure the home page is professionally designed to create a positive first impression. It should feature high-quality visuals, a clean layout, and cohesive branding, all of which contribute to an attractive and trustworthy appearance that captivates and retains visitors.
+- Ensure product categories are provided and clearly visible on the homepage. They should be prominently displayed, easy to identify, and intuitively organized, allowing users to quickly find and navigate to the products or services they are interested in.
+- Ensure the home page includes dynamic and real-time content, such as a "Most Popular" or similar section. This feature should highlight trending products or services, providing users with up-to-date information and encouraging engagement with current popular items.
+- Ensure the items on the home page are clearly focused on users' key tasks, avoiding "featuritis" or unnecessary clutter. The design should prioritize essential features and functionalities, guiding users towards their primary objectives efficiently and without distraction.
+- Ensure navigation choices are ordered in the most logical or task-oriented manner, with essential options prioritized at the top. Less critical or corporate information should be placed towards the bottom, ensuring users can quickly access and navigate to the most relevant sections or actions they seek on the website.
+- Ensure licensing, regulatory, and security information is prominently displayed to establish trust and credibility with users. This transparency assures visitors of compliance with relevant regulations, the security measures in place to protect their data, and the legitimacy of the website's operations, fostering confidence and a positive user experience.
+- Ensure current promotions, bonuses, and special offers or something similar things are prominently displayed to attract and engage users effectively. This visibility helps capture attention, encourages users to explore available incentives, and enhances their overall experience on the website by highlighting valuable opportunities for savings or benefits.
+- Ensure the home page contains a prominently displayed search input box. This feature allows users to easily search for specific content, products, or information, enhancing usability and facilitating efficient navigation throughout the website.
+- Ensure the home page of the site has a memorable URL. This makes it easy for users to recall and revisit the site, enhancing brand recognition and facilitating direct access to the homepage without relying solely on search engines or bookmarks.
+- Ensure the homepage includes a link to a cookie policy or a mechanism to accept/decline the cookie policy, in compliance with EU law. This ensures transparency regarding the use of cookies, provides users with control over their data preferences, and helps maintain legal compliance and trustworthiness with regulatory standards.
+- Ensure the website supports multiple languages and currencies to cater to an international audience effectively. This feature enhances accessibility and user experience by allowing visitors from different regions to navigate the site in their preferred language and view prices in their local currency, thereby expanding the site's reach and accommodating diverse user preferences.
+`;

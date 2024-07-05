@@ -731,6 +731,7 @@ export const fillFormInsideIframe = async (page) => {
     const registerFrame = frames.find(
       (f) => f.name() === iframeIdentification.choices[0].message.content
     );
+    if (!registerFrame) throw new Error("Could not detect iframe");
     const inputsWithinIframe = await registerFrame.evaluate(() => {
       const getCenterCoordinates = (element) => {
         const rect = element.getBoundingClientRect();
@@ -779,3 +780,26 @@ export const fillFormInsideIframe = async (page) => {
     console.log(e);
   }
 };
+
+export async function scrollToBottom(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      var totalHeight = 0;
+      var distance = 500;
+      var timer = setInterval(async () => {
+        var scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        totalHeight += distance;
+        if (totalHeight >= scrollHeight - window.innerHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  });
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+  });
+  await sleep(500);
+}

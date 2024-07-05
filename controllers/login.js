@@ -183,7 +183,14 @@ export const loginJourney = async (req, res) => {
         200
       );
     } catch (e) {
-      console.log(e);
+      return generalResponse(
+        res,
+        null,
+        "Something went wrong while performing home page journey",
+        "error",
+        true,
+        400
+      );
     } finally {
       await browser.close();
     }

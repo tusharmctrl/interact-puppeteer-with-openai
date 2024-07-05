@@ -7,7 +7,6 @@ import { fetchOpenAIResponse } from "../services/openai.js";
 import { sleep, generalResponse } from "../utils/helpers.js";
 import {
   fillForm,
-  fillFormInsideIframe,
   get_page_content,
   get_tabbable_elements,
   grabAScreenshot,
@@ -163,10 +162,26 @@ export const registerJourney = async (req, res) => {
       );
     } catch (error) {
       console.log(error);
+      return generalResponse(
+        res,
+        null,
+        "Something went wrong while performing home page journey",
+        "error",
+        true,
+        400
+      );
     } finally {
       await browser.close();
     }
   } catch (error) {
     console.log(error);
+    return generalResponse(
+      res,
+      null,
+      "Something went wrong while performing home page journey",
+      "error",
+      true,
+      400
+    );
   }
 };
