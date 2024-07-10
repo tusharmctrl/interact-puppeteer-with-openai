@@ -48,140 +48,70 @@ export const functionDefinitions = [
     },
     required: ["url"],
   },
-  {
-    name: "capture_screenshot",
-    description:
-      "Capture a screenshot of the given URL and provide the user with the screenshot path or any additional information they requested.",
-    parameters: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "The URL of the webpage to capture the screenshot from.",
-        },
-        response: {
-          type: "string",
-          description:
-            "The response to the user, possibly including the location of the screenshot and any additional requested information.",
-        },
-      },
-      required: ["url", "response"],
-    },
-  },
 ];
 
-export const REGISTER_HEURISTIC_PROMPT = `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such an array. 
+export const REGISTER_HEURISTIC_PROMPT = (
+  device = "desktop"
+) => `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such an array. 
+The following screenshots are for ${device} devices.
 [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]
-You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform.
 
-- Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users. This CTA should be consistently visible in a fixed location, such as the header or sidebar, to guide new visitors towards account creation effortlessly.
+You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform. 
 
-- Ensure the registration area opens in the same tab or window, providing a seamless user experience without redirecting users to a new tab, window, or modal/popup. This maintains continuity and reduces potential confusion during the registration process."
+- Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users. This CTA should be consistently visible in a fixed location, such as the header or sidebar, to guide new visitors towards account creation effortlessly. Improve user conversion rates by testing different CTA placements. Where possible, ensure that the CTA is always visibile to the user (perhaps via a sticky header) and only one-click away. Ensuring the registration call-to-action (CTA) is clearly visible and one-click away for the user across the website will encourage new users to sign up.
 
-- Ensure the registration page content is straightforward and easy to understand. Instructions and required actions should be immediately clear at first glance, enabling users to effortlessly complete the registration process."
+- Ensure the registration area opens in the same tab or window, providing a seamless user experience without redirecting users to a new tab, window, or modal/popup. This maintains continuity and reduces potential confusion during the registration process. Users expect the registration process to occur within the same page or tab they are currently interacting with, ensuring a seamless and uninterrupted experience. If the registeration form is appearing in the modal, mark the heuristic as failed.
 
-- Ensure that the registration process to maintain user control and awareness. Specifically, for multi-step registrations, include clear visual indicators that show users their current step, the total number of steps, and which steps are remaining. This ensures users understand their progress and what to expect next, enhancing their overall experience."
+- Ensure the registration page content is straightforward and easy to understand. Instructions and required actions should be immediately clear at first glance, enabling users to effortlessly complete the registration process. The registration page content should be straightforward, logical and easy to understand, ensuring that users can immediately recognize and understand what actions they need to take without confusion or unecessary steps. Simplify the language used on the registration page, utilize visual cues like icons or progress bars, employ clear and concise instructions, to avoid any confusion for users.
 
-- Ensure that the registration process includes easily accessible live help options. Does it Integrate features like live chat or instant customer support access, ensuring users can get immediate assistance at any point during the registration."
+- Ensure the registration process maintains user control and awareness. For multi-step registrations, include clear visual indicators that show users their current step, the total number of steps, and the remaining steps. Additionally, provide a brief summary of each step at the beginning to prepare users for the required information or actions. Incorporate intuitive navigation controls, such as "Next," "Back," and "Save" buttons, to facilitate easy movement through the steps. Use real-time validation and feedback to confirm accurate information entry and reduce errors. This comprehensive approach ensures users understand their progress and what to expect next, enhancing their overall experience and satisfaction.
 
-- Review the registration form to confirm it is simple and user-friendly. Ensure that there are no unnecessary fields, incoherent groupings, or illogical orderings, providing a streamlined registration experience for users.
+- Ensure that the registration process includes easily accessible live help options. Does it Integrate features like live chat or instant customer support access, ensuring users can get immediate assistance at any point during the registration. Ensure links to live help features, such as chatbots or instant customer service access, are prominently displayed and easily accessible during the registration process to minimize friction and improve user experience.
 
-- Review the registration form to confirm that all fields include appropriate hints, guidelines, or examples to demonstrate the expected input. This helps users understand exactly what information is required, enhancing the overall registration experience.
+- Review the registration form to confirm it is simple and user-friendly. Ensure that there are no unnecessary fields, incoherent groupings, or illogical orderings, providing a streamlined registration experience for users. Check if there are any unnecessary fields, ensure logical grouping of fields, and maintain a logical order to streamline the user registration process.
 
-- Review the registration form to ensure that all fields contain appropriate hints, guidelines, or examples to demonstrate the expected input. This helps users understand what information is required and how to provide it correctly, enhancing the overall registration experience."
+- Review the registration form to confirm that all fields include appropriate hints, guidelines, or examples to demonstrate the expected input. This helps users understand exactly what information is required, enhancing the overall registration experience. Fields should include hints, guidelines, or examples to show users the correct format and type of information required, reducing input errors and improving overall user experience.
 
-- Review the registration form to ensure that fields are designed appropriately. It uses pull-down menus, radio buttons, and checkboxes in preference to text entry fields where applicable. This simplifies data entry and improves the user experience."
+- Review the registration form to ensure that fields are designed appropriately. It uses pull-down menus, radio buttons, and checkboxes in preference to text entry fields where applicable. This simplifies data entry and improves the user experience. make sure that this heuristic ensures that appropriate input form fields are designed to minimize user effort and errors. By using pull-down menus, radio buttons, and checkboxes instead of text entry fields, users can quickly and easily make selections, reducing cognitive load and the likelihood of input mistakes.
 
-- Review the registration form to ensure there is a clear distinction between 'required' and 'optional' fields. This helps users understand which information is mandatory and which is optional, improving the overall registration experience."
+- Review the registration form to ensure there is a clear distinction between 'required' and 'optional' fields. This helps users understand which information is mandatory and which is optional, improving the overall registration experience. Most of the times
+required sign will have (*) beside the label and optional field will have (optional) written at the side to the label.
 
-- Review the registration form to ensure that all text boxes are appropriately sized for the expected input. For example, the age text box should be short, while the name text box should have a suitable width to accommodate longer entries."
+- Review the registration form to ensure that all text boxes are appropriately sized for the expected input. For example, the age text box should be short, while the name text box should have a suitable width to accommodate longer entries. This largely depends how our form will look like. How our user experience would be. it should be appropriately sized to match the expected input length, ensuring users are guided on how much information is required and can clearly read what they have input without needing to scroll through a short text field.
 
-- Ensure that data formats are clearly indicated for input (e.g., dates) and output (e.g., units of values) in the registration form. Use appropriate fields and labels, such as date pickers for dates and numerical input fields for numbers, to enhance user understanding and input accuracy."
+- Ensure that data formats are clearly indicated for input (e.g., dates) and output (e.g., units of values) in the registration form. Use appropriate fields and labels, such as date pickers for dates and numerical input fields for numbers, to enhance user understanding and input accuracy. It enhances usability by ensuring users understand the expected format and units, reducing errors and frustration. 
 
-- Ensure that users can complete simple tasks by entering only essential information, with the system automatically providing non-essential information by default. This simplifies the user experience and streamlines the completion of tasks."
+- Ensure that users can complete simple tasks by entering only essential information, with the system automatically providing non-essential information by default. This simplifies the user experience and streamlines the completion of tasks. as the system automatically fills in non-critical data. For example, if the user has selected a country previously, the country code for mobile phone should be auto completed.
 
-- Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols. This helps users create strong and secure passwords
+- Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols. This helps users create strong and secure passwords. Password indicator should contain appropriate colors, such
+as green if it's secure and matching all the criterias, red to the parts where they're not matched. This element helps in educating users on creating secure passwords and reinforces security requirements in real-time.
 
-- Make sure the website shows clear error messages when fields are filled out incorrectly or incompletely. This helps users fix their mistakes quickly."`;
+- The correct heuristic should be focused on providing useful error messaging when fields are input incorrectly, in the moment. It ensures users receive clear and actionable feedback immediately when they make mistakes while filling out forms or input fields.`;
 
-// [{
-//   name: "goto_url",
-//   description: "Goes to a specific URL and gets the content",
-//   parameters: {
-//     type: "object",
-//     properties: {
-//       url: {
-//         type: "string",
-//         description: "The URL to go to (including protocol)",
-//       },
-//     },
-//   },
-//   required: ["url"],
-// },
-
-// {
-//   name: "answer_user",
-//   description:
-//     "Give an answer to the user and end the navigation. Use when the given task has been completed. Summarize the relevant parts of the page content first and give an answer to the user based on that.",
-//   parameters: {
-//     type: "object",
-//     properties: {
-//       summary: {
-//         type: "string",
-//         description:
-//           "A summary of the relevant parts of the page content that you base the answer on",
-//       },
-//       answer: {
-//         type: "string",
-//         description: "The response to the user",
-//       },
-//     },
-//   },
-//   required: ["summary", "answer"],
-// },
-
-// {
-//   name: "type_text",
-//   description: "Types text to input fields and optionally submit the form",
-//   parameters: {
-//     type: "object",
-//     properties: {
-//       form_data: {
-//         type: "array",
-//         items: {
-//           type: "object",
-//           properties: {},
-//         },
-//       },
-//     },
-//   },
-//   required: ["form_data"],
-// }]
-
-export const LOGIN_HEURISTIC_PROMPT = `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such a JSON array object. 
+export const LOGIN_HEURISTIC_PROMPT = (
+  device = "desktop"
+) => `You have all the necessary screenshots and page content as well.
+The screenshots attached here are for ${device} devices, try to evaluate them accordingly.
+Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such a JSON array object. 
 {data: [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]}
 You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform. 
 I want you to thoroughly examine all the screenshots I am providing you here - and based on them give an answer. 
 
 - Ensure that the 'Sign In' button is easy to see on every page of the website. 
-It should always be in a clear and noticeable spot so users can easily find it no matter where they are on the site.
-
-- Ensure that the 'Sign In' button is easy to see on every page of the website. 
+Most of the time, 'Sign In' button should be on header / sidebar.
 It should always be in a clear and noticeable spot so users can easily find it no matter where they are on the site. Additionally, users should be able to sign in using a combination of their username or email and password.
 
 - Ensure there is an accessible and straightforward process for users to recover forgotten passwords. 
-This process should be easy to find, simple to follow, and provide clear instructions to help users reset their passwords quickly and securely.
+This process should be easy to find, simple to follow, and provide clear instructions to help users reset their passwords quickly and securely. Forgot password should be at below the login form.
 
 - Ensure there is an accessible and straightforward process for users who have forgotten their email addresses. 
-This process should be easy to find, simple to follow, and provide clear instructions to help users recover or verify their email addresses quickly and securely.
+This process should be easy to find, simple to follow, and provide clear instructions to help users recover or verify their email addresses quickly and securely. Forgot email address should be at below the login form. There shouldn't be confusion between retrieving an email and retrieving a password. Email also comes under a "login details" module.
 
-- Ensure there is an option for users to 'Remember My Details'. 
-This feature should be prominently available, allowing users to conveniently save their login credentials for future visits, thereby enhancing usability and user experience on the website.
+- Ensure there is an option for users to 'Remember My Details'. This feature should be prominently available, allowing users to conveniently save their login credentials for future visits, thereby enhancing usability and user experience on the website. Most of the times, there should be a checkbox of "Remember Me" at the bottom of login form.
 
-- Ensure the site features helpful error messaging that triggers only when fields are incorrectly input, ensuring users receive clear guidance to correct mistakes effectively. 
-This approach prevents confusion and enhances user experience by facilitating smooth interactions throughout the site.
+- Ensure the site features helpful error messaging that triggers only when fields are incorrectly input, ensuring users receive clear guidance to correct mistakes effectively. This approach prevents confusion and enhances user experience by facilitating smooth interactions throughout the site. 
 
-- Ensure CAPTCHA or other anti-bot measures are implemented during sign-in to enhance security and prevent automated attacks, thereby safeguarding user accounts and maintaining the integrity of the login process.
+- Ensure CAPTCHA or other anti-bot measures are implemented during sign-in to enhance security and prevent automated attacks, thereby safeguarding user accounts and maintaining the integrity of the login process. They're usually powered by google recaptcha or cloudfare.
 
 - Ensure that error messaging is clear and concise, providing users with specific reasons for the error encountered and clear instructions on the next steps to resolve the issue effectively. This approach enhances user understanding and facilitates smoother navigation and interaction on the site.
 

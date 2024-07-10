@@ -5,40 +5,44 @@ import {
 import { fetchOpenAIResponse } from "../services/openai.js";
 import { singleLineInput, sleep, generalResponse } from "../utils/helpers.js";
 import {
+  convertToDesktop,
+  convertToMobile,
   get_page_content,
   get_tabbable_elements,
+  grabAScreenshot,
   start_browser,
   wait_for_navigation,
 } from "../utils/puppeteer.js";
 import fs from "fs";
 export const loginJourney = async (req, res) => {
   try {
-    const email = "TestDeveloper";
+    const email = "TestDeveloper@gmail.com";
     const password = "Test@1";
     const url = req.query.url;
     const { browser, page } = await start_browser();
-    await page.setViewport({
-      width: 1920,
-      height: 1080,
-      deviceScaleFactor: 1,
-    });
+    console.log("Moving forwards..");
+
+    await convertToDesktop(page);
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
-    // waiting for 25 secs - just to make sure we are loading all the necessary things initially.
     await sleep(15000);
-    await page.screenshot({
-      fullPage: true,
-      path: `images/stake/home.png`,
-    });
-    const screenshots = [];
-    const homePageScreenshot = await page.screenshot({
-      fullPage: true,
-      encoding: "base64",
-    });
+    const desktopScreenshots = [];
+    const mobileScreenshots = [];
+    const homePageScreenshot = await grabAScreenshot(
+      page,
+      "images/stake/home.png"
+    );
+    await convertToMobile(page);
+    const homePageScreenshotMobile = await grabAScreenshot(
+      page,
+      "images/stake/mobile-home.png"
+    );
+    await convertToDesktop(page);
     const links_and_inputs = await get_tabbable_elements(page);
     const pageContent = await get_page_content(page);
     console.log("Page Content Extracted");
+
     const message = [
       { role: "assistant", type: "text", content: pageContent },
       {
@@ -74,19 +78,21 @@ export const loginJourney = async (req, res) => {
       await wait_for_navigation(page);
       const currentUrl = await page.url();
       console.log("📌 Link clicked! You are now on " + currentUrl);
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/login-form.png`,
-      });
 
-      const loginFormScreenshot = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
+      const loginFormScreenshot = await grabAScreenshot(
+        page,
+        "images/stake/login-form.png"
+      );
+      await convertToMobile(page);
+      const loginFormScreenshotMobile = await grabAScreenshot(
+        page,
+        "images/stake/mobile-login-form.png"
+      );
+      await convertToDesktop(page);
+
       const formFields = await page.$$eval("form input", (elements) =>
         elements.map((element) => element.name || element.id)
       );
-      console.log(formFields);
       for (const field of formFields) {
         const element = await page.$(
           `input[name="${field}"], input[id="${field}"]`
@@ -110,25 +116,28 @@ export const loginJourney = async (req, res) => {
           console.error(`Element with field name or id '${field}' not found.`);
         }
       }
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/filling-login-form.png`,
-      });
-      const fillingUpLoginFormScreenshot = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
+      const fillingUpLoginFormScreenshot = await grabAScreenshot(
+        page,
+        "images/stake/filling-login-form.png"
+      );
+      await convertToMobile(page);
+      const fillingUpLoginFormScreenshotMobile = await grabAScreenshot(
+        page,
+        "images/stake/mobile-filling-login-form.png"
+      );
       await page.keyboard.press("Enter");
       await sleep(5000);
-      await page.screenshot({
-        fullPage: true,
-        path: `images/stake/submit-login-form.png`,
-      });
-      const afterSubmitScreenshot = await page.screenshot({
-        fullPage: true,
-        encoding: "base64",
-      });
-      screenshots.push(
+      await convertToDesktop(page);
+      const afterSubmitScreenshot = await grabAScreenshot(
+        page,
+        "images/stake/submit-login-form.png"
+      );
+      await convertToMobile(page);
+      const afterSubmitScreenshotMobile = await grabAScreenshot(
+        page,
+        "images/stake/submit-login-form-mobile.png"
+      );
+      desktopScreenshots.push(
         {
           type: "image_url",
           image_url: {
@@ -154,35 +163,93 @@ export const loginJourney = async (req, res) => {
           },
         }
       );
-      const heuristicResponse = await fetchOpenAIResponse({
+      mobileScreenshots.push(
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${homePageScreenshotMobile}`,
+          },
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${loginFormScreenshotMobile}`,
+          },
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${fillingUpLoginFormScreenshotMobile}`,
+          },
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64, ${afterSubmitScreenshotMobile}`,
+          },
+        }
+      );
+      const heuristicResponseDesktop = await fetchOpenAIResponse({
         messages: [
           {
             role: "user",
-            content: JSON.stringify(screenshots),
+            content: JSON.stringify(desktopScreenshots),
           },
           {
             role: "assistant",
-            content: LOGIN_HEURISTIC_PROMPT,
+            content: LOGIN_HEURISTIC_PROMPT("desktop"),
           },
         ],
         json_response: true,
+        temperature: 0,
       });
-      const heuristicResponses = JSON.parse(
-        heuristicResponse.choices[0].message.content
+      const heuristicResponseMobile = await fetchOpenAIResponse({
+        messages: [
+          {
+            role: "user",
+            content: JSON.stringify(mobileScreenshots),
+          },
+          {
+            role: "assistant",
+            content: LOGIN_HEURISTIC_PROMPT("mobile"),
+          },
+        ],
+        json_response: true,
+        temperature: 0,
+      });
+      const heuristicResponsesDesktop = JSON.parse(
+        heuristicResponseDesktop.choices[0].message.content
+      );
+      const heuristicResponsesMobile = JSON.parse(
+        heuristicResponseMobile.choices[0].message.content
       );
       fs.writeFileSync(
-        `login_heuristic_ans - ${new Date().getTime()}.json`,
-        JSON.stringify(heuristicResponses, null, 2)
+        `Login - ${new Date().getTime()}.json`,
+        JSON.stringify(
+          {
+            desktop: heuristicResponsesDesktop,
+            mobile: heuristicResponsesMobile,
+          },
+          null,
+          2
+        )
       );
+
       return generalResponse(
         res,
-        { evaluationResult: heuristicResponses },
+        {
+          evaluationResult: {
+            desktop: heuristicResponsesDesktop,
+            mobile: heuristicResponsesMobile,
+          },
+        },
         "Successfully Completed Login Journey",
         "success",
         true,
         200
       );
     } catch (e) {
+      console.log(e);
       return generalResponse(
         res,
         null,
@@ -195,6 +262,14 @@ export const loginJourney = async (req, res) => {
       await browser.close();
     }
   } catch (error) {
-    throw error;
+    console.log(error);
+    return generalResponse(
+      res,
+      null,
+      "Something went wrong while performing home page journey",
+      "error",
+      true,
+      400
+    );
   }
 };

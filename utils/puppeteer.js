@@ -460,15 +460,53 @@ export const grabAScreenshot = async (page, ssName) => {
   return ss;
 };
 
-export const fillForm = async (page) => {
+export const convertToDesktop = async (page) => {
+  await page.setViewport({
+    width: 1920,
+    height: 1080,
+    deviceScaleFactor: 1,
+  });
+};
+
+export const convertToMobile = async (page) => {
+  await page.setViewport({
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+  });
+};
+
+export const fillForm = async (page, origin) => {
   try {
+    const beforeFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling.png`
+    );
+    await convertToMobile(page);
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling-mobile.png`
+    );
     const fillFormElements = async (page, elements) => {
+      await page.evaluate(() => {
+        const findSubmitButton = () => {
+          return document.querySelector(
+            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
+          );
+        };
+        const submitButton = findSubmitButton();
+        if (submitButton) {
+          submitButton.click();
+        }
+      });
       for (const element of elements) {
         const { location, value } = element;
         const { x, y } = location;
+
         await page.evaluate(
           async (x, y, value) => {
             await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+
             // get coordinates
             const cords = [];
             await (async () => {
@@ -514,17 +552,19 @@ export const fillForm = async (page) => {
                 cords.push(...(await detectFormElementsInShadowDOM(child)));
               }
             })();
+            console.log(cords);
             const fillFormValue = async (element, value) => {
-              console.log({ tagName: element.tagName });
               if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
                 element.focus();
                 element.value = value;
               }
             };
             let elementInfo = cords.find((item) => item.x == x && item.y == y);
-            console.log("x , y ", x, y, cords, elementInfo);
             if (elementInfo) {
+              console.log("filling the value : ", value);
               fillFormValue(elementInfo.element, value);
+            } else {
+              console.log(elementInfo);
             }
           },
           x,
@@ -567,10 +607,6 @@ export const fillForm = async (page) => {
         return cords;
       };
 
-      console.log(
-        "2.1. first approach grabbing the elements through DOM traversal"
-      );
-      // Direct DOM traversal
       const inputs = document.querySelectorAll(
         'input:not([type="hidden"],[type="file"]), select, textarea'
       );
@@ -578,10 +614,6 @@ export const fillForm = async (page) => {
         cords.push(await getCenterCoordinates(input));
       }
 
-      console.log(
-        "2.2. second approach grabbing the elements from the shadow DOM"
-      );
-      // Shadow DOM elements
       for (const child of document.body.children) {
         cords.push(...(await detectFormElementsInShadowDOM(child)));
       }
@@ -600,11 +632,13 @@ export const fillForm = async (page) => {
         }
         return item;
       });
+
     if (!filteredCords.length) {
       console.log("Could not find any elements here, checking in iframe...");
-      const iframeResponse = await fillFormInsideIframe(page);
+      const iframeResponse = await fillFormInsideIframe(page, origin);
       return iframeResponse;
     }
+
     console.log("Form Element Coordinates:", filteredCords);
     const gptPrompt = prompt2(filteredCords);
     const gptResponse = await generalOpenAIResponse(gptPrompt);
@@ -612,8 +646,27 @@ export const fillForm = async (page) => {
     console.log("GPT Coordinates", responseJson.fields);
     if (responseJson.fields) {
       await fillFormElements(page, responseJson.fields);
+      const afterFillingUpScreenshot = await grabAScreenshot(
+        page,
+        `${origin.origin}/after-filling.png`
+      );
+      await convertToMobile(page);
+      const afterFillingUpScreenshotMobile = await grabAScreenshot(
+        page,
+        `${origin.origin}/after-filling-mobile.png`
+      );
       return {
-        data: gptResponse,
+        data: {
+          gptResponse,
+          before: {
+            beforeFillingUpScreenshot,
+            beforeFillingUpScreenshotMobile,
+          },
+          after: {
+            afterFillingUpScreenshot,
+            afterFillingUpScreenshotMobile,
+          },
+        },
         success: true,
         isFormInsideIframe: false,
         message: "Successfully Filled Up Form",
@@ -624,8 +677,18 @@ export const fillForm = async (page) => {
   }
 };
 
-export const fillFormInsideIframe = async (page) => {
+export const fillFormInsideIframe = async (page, origin) => {
   try {
+    await convertToDesktop(page);
+    const beforeFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling.png`
+    );
+    await convertToMobile(page);
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling-mobile.png`
+    );
     const fillFormElementsOfIframe = async (page, elements) => {
       const elementData = elements.map(({ location, value }) => ({
         x: location.x,
@@ -699,6 +762,17 @@ export const fillFormInsideIframe = async (page) => {
           });
 
           await sleep(500);
+
+          const findSubmitButton = () => {
+            return document.querySelector(
+              'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
+            );
+          };
+          const submitButton = findSubmitButton();
+          console.log(submitButton);
+          if (submitButton) {
+            submitButton.click();
+          }
         }, elementData)
         .catch((err) => {
           console.error("Error during form filling:", err);
@@ -770,8 +844,29 @@ export const fillFormInsideIframe = async (page) => {
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
     if (responseJson.fields) {
       await fillFormElementsOfIframe(registerFrame, responseJson.fields);
+      await convertToDesktop(page);
+      const afterFillingUpScreenshot = await grabAScreenshot(
+        page,
+        `${origin.origin}/after-filling.png`
+      );
+      await convertToMobile(page);
+      const afterFillingUpScreenshotMobile = await grabAScreenshot(
+        page,
+        `${origin.origin}/after-filling-mobile.png`
+      );
+      await convertToDesktop(page);
       return {
-        data: responseJson.fields,
+        data: {
+          gptResponse,
+          before: {
+            beforeFillingUpScreenshot,
+            beforeFillingUpScreenshotMobile,
+          },
+          after: {
+            afterFillingUpScreenshot,
+            afterFillingUpScreenshotMobile,
+          },
+        },
         success: true,
         message: "Successfully Filled Up Form",
       };

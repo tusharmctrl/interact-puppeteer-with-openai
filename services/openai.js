@@ -4,6 +4,7 @@ import axios from "axios";
 export async function fetchOpenAIResponse({
   messages,
   definitions = [],
+  temperature,
   function_call = "auto",
   json_response = false,
 }) {
@@ -15,8 +16,10 @@ export async function fetchOpenAIResponse({
       API_URL,
       {
         model: MODEL,
+        temperature,
         ...(json_response ? { response_format: { type: "json_object" } } : {}),
         messages: redact_messages(messages),
+        ...(temperature ? { temperature } : {}),
         ...(definitions.length > 0
           ? { function_call: function_call, functions: definitions }
           : {}),
