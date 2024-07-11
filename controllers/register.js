@@ -28,7 +28,13 @@ export const registerJourney = async (req, res) => {
     const { browser, page } = await start_browser();
     // const browser = await puppeteer.launch({ headless: false });
     // const page = await browser.newPage();
-    await convertToDesktop(page);
+    // await convertToDesktop(page);
+    await page.setViewport({
+      width: 1920,
+      height: 1080,
+      deviceScaleFactor: 1,
+    });
+
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
@@ -40,11 +46,13 @@ export const registerJourney = async (req, res) => {
       page,
       `${hostname}/register/home.png`
     );
+    console.log("converting to mobile");
     await convertToMobile(page);
     const homeScreenShotMobile = await grabAScreenshot(
       page,
       `${hostname}/register/home-mobile.png`
     );
+    console.log("converting to mobile again");
     await convertToDesktop(page);
     const links_and_inputs = await get_tabbable_elements(page);
     const pageContent = await get_page_content(page);
@@ -54,7 +62,7 @@ export const registerJourney = async (req, res) => {
       {
         role: "assistant",
         type: "text",
-        content: `Find a way to "register or join" into the system and click on the element. The button might have text as "register" or "join"  You may find the button on header or sidebar most probabaly.`,
+        content: `Find a way to "register or join" into the system and click on the element. The button might have text as "register" or "join", You may find the button on header or sidebar most probabaly.`,
       },
     ];
     const screenshots = [];
@@ -67,6 +75,7 @@ export const registerJourney = async (req, res) => {
     const functionCall =
       openAiResponseForRegisterLink.choices[0].message.function_call;
     const args = JSON.parse(functionCall.arguments);
+    console.log(args);
     const link_id = args.pgpt_id;
     const link = links_and_inputs.find(
       (elem) => elem && elem.id == args.pgpt_id

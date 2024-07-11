@@ -466,6 +466,7 @@ export const convertToDesktop = async (page) => {
     height: 1080,
     deviceScaleFactor: 1,
   });
+  await sleep(3000);
 };
 
 export const convertToMobile = async (page) => {
@@ -474,6 +475,7 @@ export const convertToMobile = async (page) => {
     height: 844,
     deviceScaleFactor: 1,
   });
+  await sleep(3000);
 };
 
 export const fillForm = async (page, origin) => {

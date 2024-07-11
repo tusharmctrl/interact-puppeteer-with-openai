@@ -1,0 +1,178 @@
+{
+  "desktop": {
+    "response": [
+      {
+        "title": "Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users.",
+        "observation": "The registration CTA is prominently displayed in the header of the website, making it easily accessible for non-logged-in users.",
+        "result": "passed",
+        "suggestions": "No changes needed. The CTA is well-placed and visible."
+      },
+      {
+        "title": "Ensure the registration area opens in the same tab or window, providing a seamless user experience without redirecting users to a new tab, window, or modal/popup.",
+        "observation": "The registration form opens in a modal/popup window.",
+        "result": "failed",
+        "suggestions": "Consider opening the registration form in the same tab or window to provide a more seamless user experience."
+      },
+      {
+        "title": "Ensure the registration page content is straightforward and easy to understand.",
+        "observation": "The registration form is straightforward with clear instructions and required fields.",
+        "result": "passed",
+        "suggestions": "No changes needed. The form is clear and easy to understand."
+      },
+      {
+        "title": "Ensure the registration process maintains user control and awareness.",
+        "observation": "The registration form includes a progress indicator showing the current step and the total number of steps.",
+        "result": "passed",
+        "suggestions": "No changes needed. The progress indicator helps users understand their progress."
+      },
+      {
+        "title": "Ensure that the registration process includes easily accessible live help options.",
+        "observation": "There are no visible live help options or links to customer support during the registration process.",
+        "result": "failed",
+        "suggestions": "Integrate live chat or instant customer support access to assist users during the registration process."
+      },
+      {
+        "title": "Review the registration form to confirm it is simple and user-friendly.",
+        "observation": "The registration form is simple with logically grouped fields and no unnecessary fields.",
+        "result": "passed",
+        "suggestions": "No changes needed. The form is user-friendly and straightforward."
+      },
+      {
+        "title": "Review the registration form to confirm that all fields include appropriate hints, guidelines, or examples to demonstrate the expected input.",
+        "observation": "The registration form includes examples and guidelines for each field, such as email and mobile number formats.",
+        "result": "passed",
+        "suggestions": "No changes needed. The hints and guidelines are helpful for users."
+      },
+      {
+        "title": "Review the registration form to ensure that fields are designed appropriately.",
+        "observation": "The form uses appropriate input types such as dropdowns for titles and text fields for names and addresses.",
+        "result": "passed",
+        "suggestions": "No changes needed. The input fields are well-designed."
+      },
+      {
+        "title": "Review the registration form to ensure there is a clear distinction between 'required' and 'optional' fields.",
+        "observation": "The form does not clearly indicate which fields are required and which are optional.",
+        "result": "failed",
+        "suggestions": "Add clear indicators for required and optional fields to improve user understanding."
+      },
+      {
+        "title": "Review the registration form to ensure that all text boxes are appropriately sized for the expected input.",
+        "observation": "The text boxes are appropriately sized for the expected input, such as short fields for dates and longer fields for names.",
+        "result": "passed",
+        "suggestions": "No changes needed. The text boxes are well-sized."
+      },
+      {
+        "title": "Ensure that data formats are clearly indicated for input (e.g., dates) and output (e.g., units of values) in the registration form.",
+        "observation": "The form includes clear indications for data formats, such as date format (dd/mm/yyyy) and examples for email and mobile number.",
+        "result": "passed",
+        "suggestions": "No changes needed. The data formats are clearly indicated."
+      },
+      {
+        "title": "Ensure that users can complete simple tasks by entering only essential information, with the system automatically providing non-essential information by default.",
+        "observation": "The form requires users to enter all information manually, without any automatic filling of non-essential information.",
+        "result": "failed",
+        "suggestions": "Implement automatic filling of non-essential information where possible to simplify the user experience."
+      },
+      {
+        "title": "Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols.",
+        "observation": "The registration form does not include a password strength indicator.",
+        "result": "failed",
+        "suggestions": "Add a password strength indicator to help users create strong and secure passwords."
+      },
+      {
+        "title": "The correct heuristic should be focused on providing useful error messaging when fields are input incorrectly, in the moment.",
+        "observation": "The form provides real-time validation and feedback for incorrect inputs, such as missing required fields.",
+        "result": "passed",
+        "suggestions": "No changes needed. The real-time validation and feedback are helpful for users."
+      }
+    ]
+  },
+  "mobile": {
+    "response": [
+      {
+        "title": "Ensure the registration Call to Action (CTA) is prominently displayed and easily accessible on all pages of the website for non-logged-in users.",
+        "observation": "The registration CTA is prominently displayed at the top of the page with a 'Join' button, making it easily accessible for non-logged-in users.",
+        "result": "passed",
+        "suggestions": "No changes needed. The CTA is well-placed and visible."
+      },
+      {
+        "title": "Ensure the registration area opens in the same tab or window, providing a seamless user experience without redirecting users to a new tab, window, or modal/popup.",
+        "observation": "The registration form opens in a modal/popup window.",
+        "result": "failed",
+        "suggestions": "Consider opening the registration form in the same tab or window to provide a seamless user experience."
+      },
+      {
+        "title": "Ensure the registration page content is straightforward and easy to understand.",
+        "observation": "The registration form is straightforward with clear instructions and required fields.",
+        "result": "passed",
+        "suggestions": "No changes needed. The content is clear and easy to understand."
+      },
+      {
+        "title": "Ensure the registration process maintains user control and awareness.",
+        "observation": "The registration form is a single-step process without visual indicators for multiple steps.",
+        "result": "couldn't determine",
+        "suggestions": "If the registration process is multi-step, consider adding visual indicators to show progress and steps remaining."
+      },
+      {
+        "title": "Ensure that the registration process includes easily accessible live help options.",
+        "observation": "There are no visible live help options or links to customer support during the registration process.",
+        "result": "failed",
+        "suggestions": "Integrate live chat or instant customer support access to assist users during the registration process."
+      },
+      {
+        "title": "Review the registration form to confirm it is simple and user-friendly.",
+        "observation": "The registration form is simple with only essential fields required.",
+        "result": "passed",
+        "suggestions": "No changes needed. The form is user-friendly and straightforward."
+      },
+      {
+        "title": "Review the registration form to confirm that all fields include appropriate hints, guidelines, or examples to demonstrate the expected input.",
+        "observation": "The form includes examples for email and mobile number fields, but not for all fields.",
+        "result": "failed",
+        "suggestions": "Add hints or examples for all fields to guide users on the expected input format."
+      },
+      {
+        "title": "Review the registration form to ensure that fields are designed appropriately.",
+        "observation": "The form uses text entry fields for all inputs, including date of birth and title.",
+        "result": "failed",
+        "suggestions": "Use pull-down menus for fields like title and date pickers for date of birth to simplify data entry."
+      },
+      {
+        "title": "Review the registration form to ensure there is a clear distinction between 'required' and 'optional' fields.",
+        "observation": "The form does not indicate which fields are required or optional.",
+        "result": "failed",
+        "suggestions": "Clearly mark required fields with an asterisk (*) and optional fields with '(optional)' to guide users."
+      },
+      {
+        "title": "Review the registration form to ensure that all text boxes are appropriately sized for the expected input.",
+        "observation": "The text boxes are appropriately sized for the expected input.",
+        "result": "passed",
+        "suggestions": "No changes needed. The text boxes are well-sized."
+      },
+      {
+        "title": "Ensure that data formats are clearly indicated for input (e.g., dates) and output (e.g., units of values) in the registration form.",
+        "observation": "The date of birth field does not indicate the expected format.",
+        "result": "failed",
+        "suggestions": "Clearly indicate the expected format for date of birth and other fields requiring specific formats."
+      },
+      {
+        "title": "Ensure that users can complete simple tasks by entering only essential information, with the system automatically providing non-essential information by default.",
+        "observation": "The form requires manual entry for all fields without any auto-completion for non-essential information.",
+        "result": "failed",
+        "suggestions": "Implement auto-completion for non-essential information, such as country code for mobile numbers, to simplify the process."
+      },
+      {
+        "title": "Ensure there is a clearly visible password strength indicator that includes expected security parameters, such as the use of different symbols.",
+        "observation": "The registration form does not include a password strength indicator.",
+        "result": "failed",
+        "suggestions": "Add a password strength indicator to guide users in creating strong and secure passwords."
+      },
+      {
+        "title": "The correct heuristic should be focused on providing useful error messaging when fields are input incorrectly, in the moment.",
+        "observation": "The form provides real-time validation and feedback for incorrect inputs.",
+        "result": "passed",
+        "suggestions": "No changes needed. The error messaging is clear and immediate."
+      }
+    ]
+  }
+}
