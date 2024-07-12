@@ -10,13 +10,13 @@ api_key = os.getenv('API_KEY')
 Model = 'gpt-4o'
 llm = ChatOpenAI(model=Model,api_key=api_key,temperature=0)
 
-web_rag_tool = ScrapeWebsiteTool()
-
 def get_user_input():
     url = input("Please enter the URL of the website you want to analyze on Trustpilot.com: ")
     return url
 
-website_url = get_user_input()
+url = get_user_input()
+
+web_rag_tool = ScrapeWebsiteTool()
 
 researcher = Agent(
     role='Trustpilot.com Review Analyst',
@@ -29,7 +29,7 @@ researcher = Agent(
 
 research = Task(
     description=dedent(f"""
-        Please conduct a comprehensive analysis of {website_url} using Trustpilot.com, ensuring coverage of all languages by adding "?languages=all" to the URL parameter.Strictly Navigate through each paginated page of reviews by adding parameters like '?page=2', '?page=3', up to '?page=5' to ensure thorough research.
+        Please conduct a comprehensive analysis of {url} using Trustpilot.com, ensuring coverage of all languages by adding "?languages=all" to the URL parameter.Strictly Navigate through each paginated page of reviews by adding parameters like '?page=2', '?page=3', up to '?page=5' to ensure thorough research.
         Summarize your findings, focusing on user experiences and excluding terms and conditions for learning purposes only.
         Please include in your summary:
         1. An overview of the site’s aggregate rating based on all reviewed pages and languages.
@@ -49,14 +49,24 @@ Ensure your analysis is detailed and supported by specific examples or anecdotes
     4.Key Strengths and Weaknesses: Based on the reviews, what are the main strengths that users appreciate about the site? Conversely, what are the primary areas of improvement or concerns raised by reviewers?
     5.Conclusion: Based on your comprehensive analysis, summarize the overall reputation of the site among Trustpilot users. What recommendations or insights can be drawn to enhance the site's customer experience based on the feedback received?
     6.The total number of reviews you have examined.
-    7. A list of 50 reviews you've read from Trustpilot.com - along with this I would also like to get user's name and the stars they have given.
+    7. A list of 50 reviews you've read from Trustpilot.com - along with this I would also like to get user's name and the stars they have given and the review they have written too.
       Please ensure your response includes specific examples or anecdotes from reviews to support your analysis and provide a nuanced understanding of user sentiment. 
-    Once we have received all the feedbacks, I would  like you to create several categories and put those review under that for better interpretations. I would also like you to list down all the categories you have created.                      
+    Once we have received all the feedbacks, 
+    1. Entry and Home page related
+    2. Registration
+    3. Signing-in
+    4. Getting Help
+    5.Design & Performance
+    6. Depositing
+    7. Finding Games
+    8. Playing Games
+    9. Withdrawal
+    10. Using Bonus and Promotions.    
+    Once you have finished retrieving reviews from mentioned website, please categorise reviews in the above mentioned categories.
     """),
     agent=researcher,
     # allow_delegation=True
 )
-
 crew = Crew(
     agents=[researcher],
     tasks=[research],
