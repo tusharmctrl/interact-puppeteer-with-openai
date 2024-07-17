@@ -18,7 +18,7 @@ export async function fetchOpenAIResponse({
         model: MODEL,
         ...(json_response ? { response_format: { type: "json_object" } } : {}),
         messages: redact_messages(messages),
-        // ...(temperature ? { temperature } : {}),
+        ...(temperature ? { temperature } : {}),
         ...(definitions.length > 0
           ? { function_call: function_call, functions: definitions }
           : {}),
@@ -32,7 +32,7 @@ export async function fetchOpenAIResponse({
     );
     return response.data;
   } catch (e) {
-    console.log(e.response);
+    console.log(e.response.data);
     throw e;
   }
 }

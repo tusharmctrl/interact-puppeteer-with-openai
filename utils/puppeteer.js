@@ -6,6 +6,7 @@ import {
   fetchOpenAIResponse,
   generalOpenAIResponse,
 } from "../services/openai.js";
+import puppeteer from "puppeteer";
 // import puppeteer from "puppeteer";
 export async function start_browser() {
   let page_loaded = false;
@@ -899,4 +900,81 @@ export async function scrollToBottom(page) {
     window.scrollTo(0, 0);
   });
   await sleep(500);
+}
+
+export async function scrapeReviews(website) {
+  const fromPage = 1;
+  const toPage = 3;
+  const reviews = [];
+
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  let overallRating = "0";
+
+  for (let i = fromPage; i <= toPage; i++) {
+    await page.goto(
+      `https://www.trustpilot.com/review/${website}?page=${i}&date=last30days&language=en`,
+      { waitUntil: "domcontentloaded" }
+    );
+
+    const pageReviews = await page.evaluate(() => {
+      const reviewsArray = [];
+      const reviewElements = document.querySelectorAll(
+        ".paper_paper__1PY90.paper_outline__lwsUX.card_card__lQWDv.card_noPadding__D8PcU.styles_reviewCard__hcAvl"
+      );
+
+      const overallRating = document.querySelector(
+        "span.typography_heading-m__T_L_X.typography_appearance-default__AAY17"
+      );
+      const overallRatingText = overallRating ? overallRating.innerText : "";
+
+      reviewElements.forEach((review) => {
+        const reviewTitleElement = review.querySelector(
+          ".typography_heading-s__f7029.typography_appearance-default__AAY17"
+        );
+        const reviewTitle = reviewTitleElement
+          ? reviewTitleElement.innerText
+          : "";
+
+        const reviewUserElement = review.querySelector(
+          ".typography_heading-xxs__QKBS8.typography_appearance-default__AAY17"
+        );
+        const reviewUser = reviewUserElement ? reviewUserElement.innerText : "";
+
+        const reviewDateOriginalElement = review.querySelector("time");
+        const reviewDateOriginal = reviewDateOriginalElement
+          ? reviewDateOriginalElement.innerText
+          : "";
+
+        const reviewRatingElement = review.querySelector(
+          ".star-rating_starRating__4rrcf.star-rating_medium__iN6Ty"
+        ).firstChild;
+        const reviewRating = reviewRatingElement
+          ? reviewRatingElement.getAttribute("alt")
+          : "";
+
+        const reviewTextElement = review.querySelector(
+          ".typography_body-l__KUYFJ.typography_appearance-default__AAY17.typography_color-black__5LYEn"
+        );
+        const reviewText = reviewTextElement ? reviewTextElement.innerText : "";
+
+        reviewsArray.push({
+          review_title: reviewTitle,
+          review_user: reviewUser,
+          review_date: reviewDateOriginal,
+          review_rating: reviewRating,
+          review_text: reviewText,
+        });
+      });
+
+      return { reviews: reviewsArray, overallRating: overallRatingText };
+    });
+
+    reviews.push(...pageReviews.reviews);
+    overallRating = pageReviews.overallRating;
+  }
+
+  await browser.close();
+  return { reviews, overallRating };
 }
