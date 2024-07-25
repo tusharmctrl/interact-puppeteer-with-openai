@@ -46,12 +46,6 @@ export const generalOpenAIResponse = async (message) => {
           type: "text",
           text: message,
         },
-        // {
-        //   type: "image_url",
-        //   image_url: {
-        //     url: `data:image/png;base64, ${imageBase64}`,
-        //   },
-        // },
       ],
     },
   ];

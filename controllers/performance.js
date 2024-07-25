@@ -1,7 +1,7 @@
 import { generalResponse } from "../utils/helpers.js";
 import lighthouse, { desktopConfig } from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
-
+import fs from "fs";
 export const performance = async (req, res) => {
   try {
     const generateLHJson = (runnerResult) => {
@@ -9,43 +9,67 @@ export const performance = async (req, res) => {
         title: audit.title,
         score: audit.score,
       });
-      const audits = runnerResult.lhr.audits;
+      const performanceMetrics = runnerResult.lhr.audits;
       const importantDetails = {
         finalDisplayedUrl: runnerResult.lhr.finalDisplayedUrl,
-        performanceScore: runnerResult.lhr.categories.performance.score * 100,
-        accessibilityScore:
-          runnerResult.lhr.categories.accessibility.score * 100,
-        bestPracticesScore:
-          runnerResult.lhr.categories["best-practices"].score * 100,
-        seoScore: runnerResult.lhr.categories.seo.score * 100,
+        performanceScore: (
+          runnerResult.lhr.categories.performance.score * 100
+        ).toFixed(2),
+        accessibilityScore: (
+          runnerResult.lhr.categories.accessibility.score * 100
+        ).toFixed(2),
+        bestPracticesScore: (
+          runnerResult.lhr.categories["best-practices"].score * 100
+        ).toFixed(2),
+        seoScore: (runnerResult.lhr.categories.seo.score * 100).toFixed(2),
         pwaScore: runnerResult.lhr.categories.pwa
-          ? runnerResult.lhr.categories.pwa.score * 100
+          ? (runnerResult.lhr.categories.pwa.score * 100).toFixed(2)
           : null,
-        metrics: {
+        webVitals: {
           firstContentfulPaint:
-            runnerResult.lhr.audits["first-contentful-paint"].displayValue,
+            performanceMetrics["first-contentful-paint"].displayValue,
           largestContentfulPaint:
-            runnerResult.lhr.audits["largest-contentful-paint"].displayValue,
+            performanceMetrics["largest-contentful-paint"].displayValue,
           cumulativeLayoutShift:
-            runnerResult.lhr.audits["cumulative-layout-shift"].displayValue,
+            performanceMetrics["cumulative-layout-shift"].displayValue,
           totalBlockingTime:
-            runnerResult.lhr.audits["total-blocking-time"].displayValue,
-          speedIndex: runnerResult.lhr.audits["speed-index"].displayValue,
-          timeToInteractive:
-            runnerResult.lhr.audits["interactive"].displayValue,
+            performanceMetrics["total-blocking-time"].displayValue,
+          speedIndex: performanceMetrics["speed-index"].displayValue,
+          timeToInteractive: performanceMetrics["interactive"].displayValue,
           firstMeaningfulPaint:
-            runnerResult.lhr.audits["first-meaningful-paint"].displayValue,
+            performanceMetrics["first-meaningful-paint"].displayValue,
         },
-        audits: {
-          passed: Object.keys(audits)
-            .filter((key) => audits[key].score === 1)
-            .map((key) => extractAuditDetails(audits[key])),
-          failed: Object.keys(audits)
-            .filter((key) => audits[key].score < 1)
-            .map((key) => extractAuditDetails(audits[key])),
-          informative: Object.keys(audits)
-            .filter((key) => audits[key].scoreDisplayMode === "informative")
-            .map((key) => extractAuditDetails(audits[key])),
+        browserTimings: {
+          redirectDuration:
+            (
+              performanceMetrics["server-response-time"].numericValue / 1000
+            ).toFixed(2) + " s",
+          connectionDuration:
+            (
+              performanceMetrics["network-requests"].details.items.reduce(
+                (acc, item) =>
+                  acc + (item.networkEndTime - item.networkRequestTime),
+                0
+              ) / 1000
+            ).toFixed(2) + " s",
+          backendDuration:
+            (
+              performanceMetrics["network-server-latency"].numericValue / 1000
+            ).toFixed(2) + " s",
+        },
+        accessibility: {
+          passed: Object.keys(performanceMetrics)
+            .filter((key) => performanceMetrics[key].score === 1)
+            .map((key) => extractAuditDetails(performanceMetrics[key])),
+          failed: Object.keys(performanceMetrics)
+            .filter((key) => performanceMetrics[key].score < 1)
+            .map((key) => extractAuditDetails(performanceMetrics[key])),
+          informative: Object.keys(performanceMetrics)
+            .filter(
+              (key) =>
+                performanceMetrics[key].scoreDisplayMode === "informative"
+            )
+            .map((key) => extractAuditDetails(performanceMetrics[key])),
         },
       };
       return importantDetails;
@@ -59,6 +83,8 @@ export const performance = async (req, res) => {
     const url = req.query.url;
     const desktopReport = await lighthouse(url, options, desktopConfig);
     const mobileReport = await lighthouse(url, options);
+    const reportHtml = desktopReport.report;
+    fs.writeFileSync("lhreport.json", reportHtml);
     const mobile = generateLHJson(mobileReport);
     const desktop = generateLHJson(desktopReport);
     console.log("Report done for", url);

@@ -978,3 +978,34 @@ export async function scrapeReviews(website) {
   await browser.close();
   return { reviews, overallRating };
 }
+
+export const fillLoginForm = async (page) => {
+  const formFields = await page.$$eval("form input", (elements) =>
+    elements.map((element) => element.name || element.id)
+  );
+  const email = process.env.BASIC_AUTH_USERNAME;
+  const password = process.env.BASIC_AUTH_PASSWORD;
+  for (const field of formFields) {
+    const element = await page.$(
+      `input[name="${field}"], input[id="${field}"]`
+    );
+    if (element) {
+      const tagName = await page.evaluate(
+        (el) => el.tagName.toLowerCase(),
+        element
+      );
+      if (tagName === "input") {
+        if (
+          field.toLowerCase().includes("email") ||
+          field.toLowerCase().includes("username")
+        ) {
+          await element.type(email);
+        } else if (field.toLowerCase().includes("password")) {
+          await element.type(password);
+        }
+      }
+    } else {
+      console.error(`Element with field name or id '${field}' not found.`);
+    }
+  }
+};
