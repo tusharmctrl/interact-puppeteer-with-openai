@@ -1,43 +1,41 @@
-# Puppeteer-GPT
+# QxLab.io POC Implementation
 
-This script uses the ChatGPT API and Puppeteer to control Google Chrome in order to browse the internet. You can use it to get current information off the internet or accomplish tasks such as filling out forms.
+## Register Journey
 
-It is currently not very capable, but for simple tasks it works, especially when instructed properly.
+`http://localhost:8081/register-journey?url=https://betmaster.com/en/`
 
-**NOTE: Browsing with GPT-4 can be quite expensive, since website source code has lots of tokens!**
+Parameters
 
-## Installation
+- url: contails URL of a website we want to check
 
-The code requires `puppeteer`, `cheerio` and `readline` NPM packages.
+## Login Journey
 
-```console
-$ npm install puppeteer cheerio readline
-```
+`http://localhost:8081/login-journey?url=https://betmaster.com/en/`
 
-You need to set your OpenAI API key to the `OPENAI_API_KEY` environment variable
+Parameters
 
-```console
-$ export OPENAI_API_KEY=YOUR_API_KEY_HERE
-```
+- url: contails URL of a website we want to check
 
-## Usage
+## Home Page Journey
 
-```console
-$ node index.js
-GPT: Hello! What would you like to browse today?
-You: go to the unconventional coding channel on youtube
+`http://localhost:8081/home-page-journey?url=https://betmaster.com/en/`
 
-Going to https://www.youtube.com
-Typing "Unconventional Coding" to an input field
-Submitting form
-Clicking link "Unconventional Coding"
+Parameters
 
-GPT: Successfully navigated to the Unconventional Coding channel on YouTube.
-You:
-```
+- url: contails URL of a website we want to check
 
-## Command line arguments
+## Perception
 
-`--headless false`: Disable headless mode (show Chrome GUI)  
-`--limit [LIMIT]`: Limit the maximum length of web page content to be passed to ChatGPT  
-`--model [MODEL]`: Set the model to use (e.g. `gpt-4` or `gpt-3.5-turbo`)
+`http://localhost:8081/trustpilot-perception?url=betmaster.com`
+
+Parameters
+
+- url: contails URL of a website we want to check
+
+## Performance and Accessibility
+
+`http://localhost:8081/performance?url=https://betmaster.com/en`
+
+Parameters
+
+- url: contails URL of a website we want to check

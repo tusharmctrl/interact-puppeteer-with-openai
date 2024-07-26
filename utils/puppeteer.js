@@ -706,21 +706,24 @@ export const fillFormNew = async (page, origin) => {
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
     console.log(responseJson.fields);
     for (const field of responseJson.fields) {
+      if (!field.selector) continue;
       const element = await page.$(field.selector);
       if (element) {
         if (field.element_type === "textbox") {
           await page.type(field.selector, field.value, { delay: 100 });
         } else if (field.element_type === "selectbox") {
           const dropdownSelector = field.selector;
-          const options = await page.evaluate((dropdownSelector) => {
-            const selectElement = document.querySelector(dropdownSelector);
-            return Array.from(selectElement.options).map(
-              (option) => option.value
-            );
-          }, dropdownSelector);
-          const randomOption =
-            options[Math.floor(Math.random() * options.length)];
-          await page.select(dropdownSelector, randomOption);
+          if (dropdownSelector) {
+            const options = await page.evaluate((dropdownSelector) => {
+              const selectElement = document.querySelector(dropdownSelector);
+              return Array.from(selectElement.options).map(
+                (option) => option.value
+              );
+            }, dropdownSelector);
+            const randomOption =
+              options[Math.floor(Math.random() * options.length)];
+            await page.select(dropdownSelector, randomOption);
+          }
         } else if (
           field.element_type === "checkbox" ||
           field.element_type === "radiobutton"
@@ -733,6 +736,18 @@ export const fillFormNew = async (page, origin) => {
         console.error(`Element not found: ${field.selector}`);
       }
     }
+    await sleep(1000);
+    const afterFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling.png`
+    );
+    await sleep(1000);
+    await convertToMobile(page);
+    const afterFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling-mobile.png`
+    );
+
     const buttonSelector = await page.$(`button[type="submit"]`);
     if (buttonSelector) {
       await page.evaluate(() => {
@@ -750,19 +765,7 @@ export const fillFormNew = async (page, origin) => {
         };
         findAndClickSubmitButton();
       });
-    } else {
-      await page.keyboard.press("Enter");
     }
-    await sleep(1000);
-    const afterFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling.png`
-    );
-    await convertToMobile(page);
-    const afterFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling-mobile.png`
-    );
     return {
       data: {
         gptResponse,
@@ -1321,6 +1324,7 @@ export const fillLoginForm = async (page) => {
             field.toLowerCase().includes("email") ||
             field.toLowerCase().includes("username")
           ) {
+            console.log("typing", email);
             await element.type(email);
           } else if (field.toLowerCase().includes("password")) {
             await element.type(password);

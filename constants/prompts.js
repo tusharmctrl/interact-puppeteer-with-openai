@@ -54,6 +54,14 @@ export const REGISTER_HEURISTIC_PROMPT = (
   device = "desktop"
 ) => `You have all the necessary screenshots and page content as well. Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such an array. 
   The following screenshots are for ${device} devices.
+  I have attached 6 screenshots which represents follwing actions:
+  1. Home Page Desktop
+  2. Home Page Mobile
+  3. Register Form Before Filling Up Desktop
+  4. Register Form Before Filling Up Mobile
+  5. Register Form After Filling Up Desktop
+  6. Register Form After Filling Up Mobile
+  
   [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]
   
   You have to verify all the below questions through screenshots and need to give us the JSON object with response field which contains response of yours based on that. It should be strictly an array. Title should be same as the one I am providing below, and observations should be very descriptive. Suggestions must be added to give ideas about how we can enhance the user accessibility in the platform. 
@@ -87,14 +95,6 @@ export const REGISTER_HEURISTIC_PROMPT = (
   as green if it's secure and matching all the criterias, red to the parts where they're not matched. This element helps in educating users on creating secure passwords and reinforces security requirements in real-time.
   
   - The correct heuristic should be focused on providing useful error messaging when fields are input incorrectly, in the moment. It ensures users receive clear and actionable feedback immediately when they make mistakes while filling out forms or input fields.
-  
-  I have attached 6 screenshots which represents follwing actions:
-  1. Home Page Desktop
-  2. Home Page Mobile
-  3. Register Form Before Filling Up Desktop
-  4. Register Form Before Filling Up Mobile
-  5. Register Form After Filling Up Desktop
-  6. Register Form After Filling Up Mobile
   `;
 
 export const LOGIN_HEURISTIC_PROMPT = (
@@ -183,7 +183,11 @@ export const prompt2 = (cords) => `
   I am attaching here a bunch of coordinates I have extracted of all the form elements on the page and also attaching the screenshot of the page.
   You need to go through all this coordinates and find the loaction of the same on hte screenshot, on the given coordinate if you see a possible form element then create a relevant value for it.
   Also you have to give us unique selector for each of the input element. Remember you're supposed to give selector for input element. Not the parent ones such as div or span. It could be input, textarea or select. Just give us unique identifier for each of these three. 
-  In selector if you're returning a name then it should be [name="email], if you're returning id of an element then it should be [id="test1"] if none of these exist - there must be data attribute take that.
+  If the element doesn't contain input, select, radio, checkbox - just ignore them. discard them. do not give output for them.
+  In selector if you're returning a name then it should be [name="email], if you're returning id of an element then it should be [id="test1"].
+  While giving us the selector - the first priority should be by "name"
+  If you're unable to find it via name, then try finding it with "data" attribute
+  If that's also not possible then you may give us by id, but remember id should be at our lowest priority.
   One thing - you should not create your own selectors if you're not able to identify from the given element.
   HTML content resides inside the element property in the mentioned JSON.
   If given loaction doesn't look like a form element then just skip it. Just search each coordinate one by one and generate value relevant
