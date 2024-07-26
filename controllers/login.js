@@ -40,7 +40,7 @@ export const loginJourney = async (req, res) => {
     await wait_for_navigation(page);
     const currentUrl = await page.url();
     console.log("📌 Link clicked! You are now on " + currentUrl);
-
+    await sleep(2000);
     const loginFormScreenshot = await grabAScreenshot(
       page,
       `${hostname}/login/login-form.png`

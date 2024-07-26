@@ -21,8 +21,10 @@ export const clickOnButton = async (page, buttonName) => {
   });
   const functionCall = openAiResponseForLogin.choices[0].message.function_call;
   const args = JSON.parse(functionCall.arguments);
+  console.log(args);
   const link_id = args.pgpt_id;
   const link = links_and_inputs.find((elem) => elem && elem.id == args.pgpt_id);
+  console.log(link);
   /**
    * Once we receive the pgpt_id from GPT for the respected register button - we're making it click through puppeteer.
    * If somehow we're not able to find it - we're throwing a respected error for it. Once the form opens up, we are capturing

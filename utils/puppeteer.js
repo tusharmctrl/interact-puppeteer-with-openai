@@ -478,7 +478,312 @@ export const convertToMobile = async (page) => {
   });
   await sleep(3000);
 };
+export const fillFormNewIframe = async (page, origin) => {
+  try {
+    const frames = await page.frames();
+    const frameContents = [];
+    for (const frame of frames) {
+      try {
+        frameContents.push({ url: frame.url(), name: frame.name() });
+      } catch (e) {
+        console.log("could not load body :: ", frame.name());
+      }
+    }
+    const messageForFillUps = `Your task is to identify the iframe that contains the register form. You can use the iframe's name, or can use provided url to access the content of url and give your decision based on the same. Your response should strictly return the name of the iframe that contains the register form and nothing else.
+  Below is the data which contains url and name of iframes :
+  ${JSON.stringify(frameContents)}
+  Please analyze the data and Strictly provide the name of the iframe that contains the register form.`;
 
+    console.log("Asking GPT for a frame that consists register form..");
+    const iframeIdentification = await fetchOpenAIResponse({
+      messages: [
+        {
+          role: "system",
+          content: messageForFillUps,
+        },
+      ],
+    });
+
+    const registerFrame = frames.find(
+      (f) => f.name() === iframeIdentification.choices[0].message.content
+    );
+    if (!registerFrame) throw new Error("Could not detect iframe");
+    const inputsWithinIframe = await registerFrame.evaluate(() => {
+      const getCenterCoordinates = (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          element: element.outerHTML,
+        };
+      };
+
+      const tempCords = [];
+      const neededInputs = document.querySelectorAll(
+        'input:not([type="hidden"],[type="file"]), select, textarea'
+      );
+      for (const input of neededInputs) {
+        tempCords.push(getCenterCoordinates(input));
+      }
+      return tempCords;
+    });
+
+    const filteredCords = inputsWithinIframe
+      .filter((item) => item.x !== 0 && item.y !== 0)
+      .map((item) => {
+        if (item.element.length > 10000) {
+          return {
+            ...item,
+            element: item.element.substr(0, 10000),
+          };
+        }
+        return item;
+      });
+    await convertToDesktop(page);
+    const beforeFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling.png`
+    );
+    await convertToMobile(page);
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling-mobile.png`
+    );
+    const gptPrompt = prompt2(filteredCords);
+    const gptResponse = await generalOpenAIResponse(gptPrompt);
+    const responseJson = JSON.parse(gptResponse.choices[0].message.content);
+    for (const field of responseJson.fields) {
+      const element = await registerFrame.$(field.selector);
+      if (element) {
+        if (field.element_type === "textbox") {
+          await registerFrame.type(field.selector, field.value, { delay: 100 });
+        } else if (field.element_type === "radio") {
+          await registerFrame.click(field.selector);
+        } else if (field.element_type === "selectbox") {
+          const dropdownSelector = field.selector;
+          const options = await registerFrame.evaluate((dropdownSelector) => {
+            const selectElement = document.querySelector(dropdownSelector);
+            return Array.from(selectElement.options).map(
+              (option) => option.value
+            );
+          }, dropdownSelector);
+          const randomOption =
+            options[Math.floor(Math.random() * options.length)];
+          await registerFrame.select(dropdownSelector, randomOption);
+        }
+        await page.keyboard.press("Enter");
+      } else {
+        console.error(`Element not found: ${field.selector}`);
+      }
+    }
+    await convertToDesktop(page);
+    const buttonSelector = await page.$(`button[type="submit"]`);
+    if (buttonSelector) {
+      await page.evaluate(() => {
+        const findAndClickSubmitButton = () => {
+          const button = document.querySelector(
+            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
+          );
+          if (button) {
+            button.click();
+          } else {
+            document.activeElement?.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter" })
+            );
+          }
+        };
+        findAndClickSubmitButton();
+      });
+    } else {
+      await page.keyboard.press("Enter");
+    }
+    const afterFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling.png`
+    );
+    await convertToMobile(page);
+    const afterFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling-mobile.png`
+    );
+    await convertToDesktop(page);
+    return {
+      data: {
+        gptResponse,
+        before: {
+          beforeFillingUpScreenshot,
+          beforeFillingUpScreenshotMobile,
+        },
+        after: {
+          afterFillingUpScreenshot,
+          afterFillingUpScreenshotMobile,
+        },
+      },
+      success: true,
+      message: "Successfully Filled Up Form",
+    };
+  } catch (error) {
+    console.log(error);
+    return {};
+  }
+};
+export const fillFormNew = async (page, origin) => {
+  try {
+    const coordinates = await page.evaluate(async () => {
+      const cords = [];
+      const getCenterCoordinates = async (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          element: element.parentElement.outerHTML,
+        };
+      };
+
+      const detectFormElementsInShadowDOM = async (element) => {
+        const cords = [];
+        if (element.shadowRoot) {
+          const inputs = element.shadowRoot.querySelectorAll(
+            'input:not([type="hidden"],[type="file"]), select, textarea'
+          );
+          for (const input of inputs) {
+            cords.push(await getCenterCoordinates(input));
+          }
+          // Recursively check the Shadow DOM
+          for (const child of element.shadowRoot.children) {
+            cords.push(...(await detectFormElementsInShadowDOM(child)));
+          }
+        }
+
+        for (const child of element.children) {
+          cords.push(...(await detectFormElementsInShadowDOM(child)));
+        }
+
+        return cords;
+      };
+
+      const inputs = document.querySelectorAll(
+        'input:not([type="hidden"],[type="file"]), select, textarea'
+      );
+      for (const input of inputs) {
+        cords.push(await getCenterCoordinates(input));
+      }
+
+      for (const child of document.body.children) {
+        cords.push(...(await detectFormElementsInShadowDOM(child)));
+      }
+
+      return cords;
+    });
+    const filteredCords = coordinates
+      .filter((item) => item.x !== 0 && item.y !== 0)
+      .map((item) => {
+        if (item.element.length > 10000) {
+          return {
+            ...item,
+            element: item.element.substr(0, 10000),
+          };
+        }
+        return item;
+      });
+    if (!filteredCords.length) {
+      const iframeResult = await fillFormNewIframe(page, origin);
+      return iframeResult;
+    }
+    await convertToDesktop(page);
+    const beforeFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling.png`
+    );
+    await convertToMobile(page);
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/before-filling-mobile.png`
+    );
+    await convertToDesktop(page);
+    const gptPrompt = prompt2(filteredCords);
+    const gptResponse = await generalOpenAIResponse(gptPrompt);
+    const responseJson = JSON.parse(gptResponse.choices[0].message.content);
+    console.log(responseJson.fields);
+    for (const field of responseJson.fields) {
+      const element = await page.$(field.selector);
+      if (element) {
+        if (field.element_type === "textbox") {
+          await page.type(field.selector, field.value, { delay: 100 });
+        } else if (field.element_type === "selectbox") {
+          const dropdownSelector = field.selector;
+          const options = await page.evaluate((dropdownSelector) => {
+            const selectElement = document.querySelector(dropdownSelector);
+            return Array.from(selectElement.options).map(
+              (option) => option.value
+            );
+          }, dropdownSelector);
+          const randomOption =
+            options[Math.floor(Math.random() * options.length)];
+          await page.select(dropdownSelector, randomOption);
+        } else if (
+          field.element_type === "checkbox" ||
+          field.element_type === "radiobutton"
+        ) {
+          const checkboxEl = await page.waitForSelector(field.selector);
+          await checkboxEl.click();
+        }
+        await page.keyboard.press("Enter");
+      } else {
+        console.error(`Element not found: ${field.selector}`);
+      }
+    }
+    const buttonSelector = await page.$(`button[type="submit"]`);
+    if (buttonSelector) {
+      await page.evaluate(() => {
+        const findAndClickSubmitButton = () => {
+          const button = document.querySelector(
+            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
+          );
+          if (button) {
+            button.click();
+          } else {
+            document.activeElement?.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter" })
+            );
+          }
+        };
+        findAndClickSubmitButton();
+      });
+    } else {
+      await page.keyboard.press("Enter");
+    }
+    await sleep(1000);
+    const afterFillingUpScreenshot = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling.png`
+    );
+    await convertToMobile(page);
+    const afterFillingUpScreenshotMobile = await grabAScreenshot(
+      page,
+      `${origin.origin}/after-filling-mobile.png`
+    );
+    return {
+      data: {
+        gptResponse,
+        before: {
+          beforeFillingUpScreenshot,
+          beforeFillingUpScreenshotMobile,
+        },
+        after: {
+          afterFillingUpScreenshot,
+          afterFillingUpScreenshotMobile,
+        },
+      },
+      success: true,
+      isFormInsideIframe: false,
+      message: "Successfully Filled Up Form",
+    };
+  } catch (error) {
+    console.log(error);
+    return {};
+  }
+};
 export const fillForm = async (page, origin) => {
   try {
     const beforeFillingUpScreenshot = await grabAScreenshot(
@@ -490,6 +795,7 @@ export const fillForm = async (page, origin) => {
       page,
       `${origin.origin}/before-filling-mobile.png`
     );
+    await convertToDesktop(page);
     const fillFormElements = async (page, elements) => {
       await page.evaluate(() => {
         const findSubmitButton = () => {
@@ -558,14 +864,28 @@ export const fillForm = async (page, origin) => {
             console.log(cords);
             const fillFormValue = async (element, value) => {
               if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) {
-                element.focus();
-                element.value = value;
+                // element.focus();
+                element.value = structuredClone(value);
               }
             };
             let elementInfo = cords.find((item) => item.x == x && item.y == y);
             if (elementInfo) {
               console.log("filling the value : ", value);
-              fillFormValue(elementInfo.element, value);
+              const elementClickPoints = document.elementFromPoint(
+                elementInfo.x,
+                elementInfo.y
+              );
+              if (elementClickPoints) {
+                console.log("clicking", elementInfo);
+                var clickEvent = new MouseEvent("click", {
+                  view: window,
+                  bubbles: true,
+                  cancelable: true,
+                });
+                elementClickPoints.dispatchEvent(clickEvent);
+                // await new Promise((resolve) => setTimeout(resolve, 3000));
+                await fillFormValue(elementInfo.element, value);
+              }
             } else {
               console.log(elementInfo);
             }
@@ -980,32 +1300,37 @@ export async function scrapeReviews(website) {
 }
 
 export const fillLoginForm = async (page) => {
-  const formFields = await page.$$eval("form input", (elements) =>
-    elements.map((element) => element.name || element.id)
-  );
-  const email = process.env.BASIC_AUTH_USERNAME;
-  const password = process.env.BASIC_AUTH_PASSWORD;
-  for (const field of formFields) {
-    const element = await page.$(
-      `input[name="${field}"], input[id="${field}"]`
+  try {
+    const formFields = await page.$$eval("form input", (elements) =>
+      elements.map((element) => element.name || element.id)
     );
-    if (element) {
-      const tagName = await page.evaluate(
-        (el) => el.tagName.toLowerCase(),
-        element
+    const email = process.env.BASIC_AUTH_USERNAME;
+    const password = process.env.BASIC_AUTH_PASSWORD;
+    console.log(email, password);
+    for (const field of formFields) {
+      const element = await page.$(
+        `input[name="${field}"], input[id="${field}"]`
       );
-      if (tagName === "input") {
-        if (
-          field.toLowerCase().includes("email") ||
-          field.toLowerCase().includes("username")
-        ) {
-          await element.type(email);
-        } else if (field.toLowerCase().includes("password")) {
-          await element.type(password);
+      if (element) {
+        const tagName = await page.evaluate(
+          (el) => el.tagName.toLowerCase(),
+          element
+        );
+        if (tagName === "input") {
+          if (
+            field.toLowerCase().includes("email") ||
+            field.toLowerCase().includes("username")
+          ) {
+            await element.type(email);
+          } else if (field.toLowerCase().includes("password")) {
+            await element.type(password);
+          }
         }
+      } else {
+        console.error(`Element with field name or id '${field}' not found.`);
       }
-    } else {
-      console.error(`Element with field name or id '${field}' not found.`);
     }
+  } catch (e) {
+    console.log(e);
   }
 };

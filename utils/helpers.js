@@ -25,10 +25,10 @@ export async function input(promptText) {
 export const generalResponse = (
   response,
   data = [],
-  message = '',
-  response_type = 'success',
+  message = "",
+  response_type = "success",
   toast = false,
-  statusCode = 200,
+  statusCode = 200
 ) => {
   response.status(statusCode).send({
     data: data,
@@ -90,26 +90,22 @@ export async function singleLineInput(text) {
   return the_prompt;
 }
 
-
 export const getFormFields = async (page) => {
   try {
     // const formElement = await page.waitForSelector("form");
     const formElement = await page.$("form");
 
-
-    const fields = await formElement.$$eval(
-      "input, select, textarea",
-      (elements) => {
+    const fields =
+      (await formElement.$$eval("input, select, textarea", (elements) => {
         return elements.map((element) => ({
           tagName: element.tagName.toLowerCase(),
           name: element.name,
           type: element.type,
           value: element.value,
         }));
-      }
-    ) || [];
+      })) || [];
 
-    return {formFields : fields  };
+    return { formFields: fields };
   } catch (error) {
     let frames = await page.frames();
     let frameContents = [];
@@ -120,7 +116,6 @@ export const getFormFields = async (page) => {
         console.log("could not load body :: ", frame.name());
       }
     }
-
 
     const messageForFillUps = `Your task is to identify the iframe that contains the register form. You can use the iframe's name, or can use provided url to access the content of url and give your decision based on the same. Your response should strictly return the name of the iframe that contains the register form and nothing else.
     
@@ -143,7 +138,6 @@ export const getFormFields = async (page) => {
       (f) => f.name() === forTypeResponse.choices[0].message.content
     );
 
-
     if (targetFrame) {
       // Extract the form and its fields from within the frame context
       const formFields = await targetFrame.evaluate(() => {
@@ -160,7 +154,13 @@ export const getFormFields = async (page) => {
         return fields;
       });
 
-      return {formFields , targetFrame };
+      return { formFields, targetFrame };
     }
   }
+};
+
+export const cleanURL = (url) => {
+  let resultUrl = new URL(url);
+  resultUrl.search = "";
+  return resultUrl.toString();
 };

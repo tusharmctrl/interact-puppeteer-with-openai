@@ -8,7 +8,7 @@ import { sleep, generalResponse } from "../utils/helpers.js";
 import {
   convertToDesktop,
   convertToMobile,
-  fillForm,
+  fillFormNew,
   get_page_content,
   get_tabbable_elements,
   grabAScreenshot,
@@ -26,15 +26,6 @@ export const registerJourney = async (req, res) => {
       console.log(err);
     });
     const { browser, page } = await start_browser();
-    // const browser = await puppeteer.launch({ headless: false });
-    // const page = await browser.newPage();
-    // await convertToDesktop(page);
-    await page.setViewport({
-      width: 1920,
-      height: 1080,
-      deviceScaleFactor: 1,
-    });
-
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
@@ -93,7 +84,7 @@ export const registerJourney = async (req, res) => {
       page.click(".pgpt-element" + link_id);
       await sleep(2000);
       await wait_for_navigation(page);
-      const currentUrl = await page.url();
+      const currentUrl = page.url();
       console.log("📌 Link clicked! You are now on " + currentUrl);
       /**
        * Here we're submitting the form without filling up any values -- so it can generate errors and we can test
@@ -102,9 +93,10 @@ export const registerJourney = async (req, res) => {
       /**
        * Here - we'll write our code for typing values in to the form.
        */
-      const responseOfFillingForm = await fillForm(page, {
+      const responseOfFillingForm = await fillFormNew(page, {
         origin: `${hostname}/register`,
       });
+      console.log(responseOfFillingForm);
       if (responseOfFillingForm.success) {
         const beforefillingFormSSDesktop = await responseOfFillingForm.data
           .before.beforeFillingUpScreenshot;
@@ -239,7 +231,7 @@ export const registerJourney = async (req, res) => {
         400
       );
     } finally {
-      // await browser.close();
+      await browser.close();
     }
   } catch (error) {
     console.log(error);
