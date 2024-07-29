@@ -9,6 +9,7 @@ import { scrapeReviews } from "../utils/puppeteer.js";
 export const trustPilot = async (req, res) => {
   try {
     const reviews = await scrapeReviews(req.query.url);
+    const assessmentId = "777102ce-b6c1-415e-8948-dc6eb91f08fd" // we need to make this one dynamic.
     const formattedReviews = reviews.reviews.map((data, index) => ({
       ...data,
       review_id: index,
@@ -47,11 +48,34 @@ export const trustPilot = async (req, res) => {
         Reviews: detailedReviews,
       };
     });
+    const dataToBeStoredInTable = finalPerception.map((perception) => {
+      return {
+        assessment_id: assessmentId,
+        s_category_id: 3,
+        s_sub_category_id: perception.journey_id,
+        sub_category_name: perception.journey,
+        category_name: "Perception"
+        perception_assessments: {
+          data: [{
+            summary_positive: perception.Summary?.positive,
+            summary_negative: perception.Summary?.negative,
+            proposition_reviewed_percent: perception.proposition?.total_reviewed_from,
+            proposition_sentiment_positive: parseFloat(perception.proposition?.sentiment?.positive),
+            proposition_sentiment_negative: parseFloat(perception.proposition?.sentiment?.negative),
+            proposition_sentiment_neutal: parseFloat(perception.proposition?.sentiment?.neutral),
+            medium: "TRUSTPILOT",
+            overall_rating: reviews.overallRating,
+            perception_assessment_review_trustpilots: {
+              data: perception?.Reviews
+            }
+          }]
+        }
+      }
+    })
     return generalResponse(
       res,
       {
-        perception: finalPerception,
-        overallRatings: { trustPilot: reviews.overallRating },
+        perception: dataToBeStoredInTable
       },
       "Reviews Scraped Successfully!",
       "success",
@@ -70,3 +94,4 @@ export const trustPilot = async (req, res) => {
     );
   }
 };
+

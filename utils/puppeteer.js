@@ -1230,8 +1230,7 @@ export async function scrapeReviews(website) {
   const toPage = 3;
   const reviews = [];
 
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
+  const { browser, page } = await start_browser()
 
   let overallRating = "0";
 

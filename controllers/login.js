@@ -171,7 +171,6 @@ export const loginJourney = async (req, res) => {
         2
       )
     );
-
     return generalResponse(
       res,
       {
