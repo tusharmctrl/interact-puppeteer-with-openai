@@ -2,75 +2,49 @@ import { generalResponse } from "../utils/helpers.js";
 import lighthouse, { desktopConfig } from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
 import fs from "fs";
-export const performance = async (req, res) => {
+export const performance = async (url, assessmentId) => {
   try {
-    const generateLHJson = (runnerResult) => {
+    const generateLHJson = (runnerResult, device) => {
       const extractAuditDetails = (audit) => ({
+        assessment_id: assessmentId,
         title: audit.title,
         score: audit.score,
+        device: device,
+        type: audit.score === 1 ? "PASSED" : audit.score < 1 ? "FAILED" : audit.scoreDisplayMode === "informative" ? "INFORMATIVE" : "",
       });
       const performanceMetrics = runnerResult.lhr.audits;
       const importantDetails = {
-        finalDisplayedUrl: runnerResult.lhr.finalDisplayedUrl,
-        performanceScore: (
-          runnerResult.lhr.categories.performance.score * 100
-        ).toFixed(2),
-        accessibilityScore: (
-          runnerResult.lhr.categories.accessibility.score * 100
-        ).toFixed(2),
-        bestPracticesScore: (
-          runnerResult.lhr.categories["best-practices"].score * 100
-        ).toFixed(2),
-        seoScore: (runnerResult.lhr.categories.seo.score * 100).toFixed(2),
-        pwaScore: runnerResult.lhr.categories.pwa
-          ? (runnerResult.lhr.categories.pwa.score * 100).toFixed(2)
-          : null,
-        webVitals: {
-          firstContentfulPaint:
-            performanceMetrics["first-contentful-paint"].displayValue,
-          largestContentfulPaint:
-            performanceMetrics["largest-contentful-paint"].displayValue,
-          cumulativeLayoutShift:
-            performanceMetrics["cumulative-layout-shift"].displayValue,
-          totalBlockingTime:
-            performanceMetrics["total-blocking-time"].displayValue,
-          speedIndex: performanceMetrics["speed-index"].displayValue,
-          timeToInteractive: performanceMetrics["interactive"].displayValue,
-          firstMeaningfulPaint:
-            performanceMetrics["first-meaningful-paint"].displayValue,
+        score: {
+          performance_score: (runnerResult.lhr.categories.performance.score * 100).toFixed(2),
+          accessibility_score: (runnerResult.lhr.categories.accessibility.score * 100).toFixed(2),
         },
-        browserTimings: {
-          redirectDuration:
-            (
-              performanceMetrics["server-response-time"].numericValue / 1000
-            ).toFixed(2) + " s",
-          connectionDuration:
-            (
-              performanceMetrics["network-requests"].details.items.reduce(
-                (acc, item) =>
-                  acc + (item.networkEndTime - item.networkRequestTime),
-                0
-              ) / 1000
-            ).toFixed(2) + " s",
-          backendDuration:
-            (
-              performanceMetrics["network-server-latency"].numericValue / 1000
-            ).toFixed(2) + " s",
+        performance: {
+          assessment_id: assessmentId,
+          device: device,
+          best_practice_score: (runnerResult.lhr.categories["best-practices"].score * 100).toFixed(2),
+          seo_score: (runnerResult.lhr.categories.seo.score * 100).toFixed(2),
+          pwa_score: runnerResult.lhr.categories.pwa ? (runnerResult.lhr.categories.pwa.score * 100).toFixed(2) : null,
+          web_vitals: {
+            first_contentful_paint: performanceMetrics["first-contentful-paint"].displayValue,
+            largest_contentful_paint: performanceMetrics["largest-contentful-paint"].displayValue,
+            cumulative_layout_shift: performanceMetrics["cumulative-layout-shift"].displayValue,
+            total_blocking_time: performanceMetrics["total-blocking-time"].displayValue,
+            speed_index: performanceMetrics["speed-index"].displayValue,
+            time_to_interactive: performanceMetrics["interactive"].displayValue,
+            first_meaningful_paint: performanceMetrics["first-meaningful-paint"].displayValue,
+          },
+          browser_timings: {
+            redirect_duration: (performanceMetrics["server-response-time"].numericValue / 1000).toFixed(2) + " s",
+            connection_duration:
+              (
+                performanceMetrics["network-requests"].details.items.reduce((acc, item) => acc + (item.networkEndTime - item.networkRequestTime), 0) / 1000
+              ).toFixed(2) + " s",
+            backend_duration: (performanceMetrics["network-server-latency"].numericValue / 1000).toFixed(2) + " s",
+          },
         },
-        accessibility: {
-          passed: Object.keys(performanceMetrics)
-            .filter((key) => performanceMetrics[key].score === 1)
-            .map((key) => extractAuditDetails(performanceMetrics[key])),
-          failed: Object.keys(performanceMetrics)
-            .filter((key) => performanceMetrics[key].score < 1)
-            .map((key) => extractAuditDetails(performanceMetrics[key])),
-          informative: Object.keys(performanceMetrics)
-            .filter(
-              (key) =>
-                performanceMetrics[key].scoreDisplayMode === "informative"
-            )
-            .map((key) => extractAuditDetails(performanceMetrics[key])),
-        },
+        accessibility: Object.keys(performanceMetrics).map((key) => {
+          return extractAuditDetails(performanceMetrics[key]);
+        }),
       };
       return importantDetails;
     };
@@ -80,35 +54,17 @@ export const performance = async (req, res) => {
       output: "json",
       port: chrome.port,
     };
-    const url = req.query.url;
     const desktopReport = await lighthouse(url, options, desktopConfig);
     const mobileReport = await lighthouse(url, options);
     const reportHtml = desktopReport.report;
     fs.writeFileSync("lhreport.json", reportHtml);
-    const mobile = generateLHJson(mobileReport);
-    const desktop = generateLHJson(desktopReport);
+    const mobile = generateLHJson(mobileReport, "MOBILE");
+    const desktop = generateLHJson(desktopReport, "DESKTOP");
     console.log("Report done for", url);
     chrome.kill();
-    return generalResponse(
-      res,
-      {
-        mobile,
-        desktop,
-      },
-      "Successfully Completed Login Journey",
-      "success",
-      true,
-      200
-    );
+    return { mobile, desktop };
   } catch (error) {
     console.log(error);
-    return generalResponse(
-      res,
-      null,
-      "Something went wrong while performing performances",
-      "error",
-      true,
-      400
-    );
+    return;
   }
 };

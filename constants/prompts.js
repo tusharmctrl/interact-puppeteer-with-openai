@@ -25,8 +25,7 @@ export const functionDefinitions = [
         },
         pgpt_id: {
           type: "number",
-          description:
-            "The pgpt-id of the link to click (from the page content)",
+          description: "The pgpt-id of the link to click (from the page content)",
         },
       },
     },
@@ -34,15 +33,13 @@ export const functionDefinitions = [
   },
   {
     name: "fill_form",
-    description:
-      "Fills the text to input fields and optionally submit the form",
+    description: "Fills the text to input fields and optionally submit the form",
     parameters: {
       type: "object",
       properties: {
         url: {
           type: "string",
-          description:
-            "The URL to go to (including protocol) of the form page we're about to scrap.",
+          description: "The URL to go to (including protocol) of the form page we're about to scrap.",
         },
       },
     },
@@ -97,9 +94,7 @@ export const REGISTER_HEURISTIC_PROMPT = (
   - The correct heuristic should be focused on providing useful error messaging when fields are input incorrectly, in the moment. It ensures users receive clear and actionable feedback immediately when they make mistakes while filling out forms or input fields.
   `;
 
-export const LOGIN_HEURISTIC_PROMPT = (
-  device = "desktop"
-) => `You have all the necessary screenshots and page content as well.
+export const LOGIN_HEURISTIC_PROMPT = (device = "desktop") => `You have all the necessary screenshots and page content as well.
   The screenshots attached here are for ${device} devices, try to evaluate them accordingly.
   Try to identify these heuristics I have given here. I want you to perform following heuristics and you have to answer them in such a JSON array object. 
   {data: [{title: sring, observation: string, result: "passed/failed/couldnt'determine", suggestions: string}]}
@@ -256,5 +251,5 @@ export const REVIEW_USER_PROMPT = (reviews) =>
     {
       perception: [{journey: "Register", journey_id: 11 Reviews: [{review_id: 1}, {review_id: 4} ], Summary: {positive: "", negative: ""}, proposition: {total_reviewed_from: "10%", sentiment: {positive: "20%", negative: "50%", neutral: "30%"}}}, {journey: "Entry and Homepage", Reviews: [{review_id: 1}, {review_id: 4} ], Summary: {positive: "", negative: ""}}]
     }
-    In JSON sentiment - make sure you don't add ("%") sign  at the back and  just return value only.
+    In JSON sentiment and proposition - make sure you don't add ("%") sign  at the back and  just return value only.
   `;

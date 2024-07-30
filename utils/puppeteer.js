@@ -2,10 +2,7 @@ import { connect } from "puppeteer-real-browser";
 import cheerio from "cheerio";
 import { sleep } from "./helpers.js";
 import { prompt2 } from "../constants/prompts.js";
-import {
-  fetchOpenAIResponse,
-  generalOpenAIResponse,
-} from "../services/openai.js";
+import { fetchOpenAIResponse, generalOpenAIResponse } from "../services/openai.js";
 import puppeteer from "puppeteer";
 // import puppeteer from "puppeteer";
 export async function start_browser() {
@@ -90,14 +87,7 @@ function good_html(html) {
 
   $("script, style").remove();
 
-  let important = [
-    "main",
-    '[role="main"]',
-    "#bodyContent",
-    "#search",
-    "#searchform",
-    ".kp-header",
-  ];
+  let important = ["main", '[role="main"]', "#bodyContent", "#search", "#searchform", ".kp-header"];
 
   // move important content to top
   important.forEach((im) => {
@@ -171,13 +161,7 @@ export async function get_page_content(page) {
     return document.body.innerHTML;
   });
 
-  return (
-    "## START OF PAGE CONTENT ##\nTitle: " +
-    title +
-    "\n\n" +
-    ugly_chowder(html) +
-    "\n## END OF PAGE CONTENT ##"
-  );
+  return "## START OF PAGE CONTENT ##\nTitle: " + title + "\n\n" + ugly_chowder(html) + "\n## END OF PAGE CONTENT ##";
 }
 
 export async function wait_for_navigation(page) {
@@ -407,8 +391,7 @@ const selectOption = async (page, dropdownSelector, element) => {
   }, dropdownSelector);
 
   const filteredOptions = options.filter((option) => option !== "");
-  const randomOption =
-    filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
+  const randomOption = filteredOptions[Math.floor(Math.random() * filteredOptions.length)];
   await element.select(randomOption);
 };
 
@@ -420,10 +403,7 @@ export async function typeTextInForm(formFields, data, page) {
         `input[name="${field.name}"], input[id="${field.name}"], select[name="${field.name}"], select[id="${field.name}"], textarea[name="${field.name}"], textarea[id="${field.name}"]`
       );
       if (element) {
-        const tagName = await page.evaluate(
-          (el) => el.tagName.toLowerCase(),
-          element
-        );
+        const tagName = await page.evaluate((el) => el.tagName.toLowerCase(), element);
         if (tagName === "input") {
           const inputType = await page.evaluate((el) => el.type, element);
           if (inputType === "checkbox") {
@@ -442,9 +422,7 @@ export async function typeTextInForm(formFields, data, page) {
           await selectOption(page, dropdownSelector, element);
         }
       } else {
-        console.error(
-          `Element with field name or id '${field.name}' not found.`
-        );
+        console.error(`Element with field name or id '${field.name}' not found.`);
       }
     }
   }
@@ -504,9 +482,7 @@ export const fillFormNewIframe = async (page, origin) => {
       ],
     });
 
-    const registerFrame = frames.find(
-      (f) => f.name() === iframeIdentification.choices[0].message.content
-    );
+    const registerFrame = frames.find((f) => f.name() === iframeIdentification.choices[0].message.content);
     if (!registerFrame) throw new Error("Could not detect iframe");
     const inputsWithinIframe = await registerFrame.evaluate(() => {
       const getCenterCoordinates = (element) => {
@@ -519,9 +495,7 @@ export const fillFormNewIframe = async (page, origin) => {
       };
 
       const tempCords = [];
-      const neededInputs = document.querySelectorAll(
-        'input:not([type="hidden"],[type="file"]), select, textarea'
-      );
+      const neededInputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
       for (const input of neededInputs) {
         tempCords.push(getCenterCoordinates(input));
       }
@@ -540,15 +514,9 @@ export const fillFormNewIframe = async (page, origin) => {
         return item;
       });
     await convertToDesktop(page);
-    const beforeFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling.png`
-    );
+    const beforeFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/before-filling.png`);
     await convertToMobile(page);
-    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling-mobile.png`
-    );
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/before-filling-mobile.png`);
     const gptPrompt = prompt2(filteredCords);
     const gptResponse = await generalOpenAIResponse(gptPrompt);
     const responseJson = JSON.parse(gptResponse.choices[0].message.content);
@@ -563,12 +531,9 @@ export const fillFormNewIframe = async (page, origin) => {
           const dropdownSelector = field.selector;
           const options = await registerFrame.evaluate((dropdownSelector) => {
             const selectElement = document.querySelector(dropdownSelector);
-            return Array.from(selectElement.options).map(
-              (option) => option.value
-            );
+            return Array.from(selectElement.options).map((option) => option.value);
           }, dropdownSelector);
-          const randomOption =
-            options[Math.floor(Math.random() * options.length)];
+          const randomOption = options[Math.floor(Math.random() * options.length)];
           await registerFrame.select(dropdownSelector, randomOption);
         }
         await page.keyboard.press("Enter");
@@ -581,15 +546,11 @@ export const fillFormNewIframe = async (page, origin) => {
     if (buttonSelector) {
       await page.evaluate(() => {
         const findAndClickSubmitButton = () => {
-          const button = document.querySelector(
-            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
-          );
+          const button = document.querySelector('button[id*="submit"], button[type*="submit"], button[name*="submit"]');
           if (button) {
             button.click();
           } else {
-            document.activeElement?.dispatchEvent(
-              new KeyboardEvent("keydown", { key: "Enter" })
-            );
+            document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
           }
         };
         findAndClickSubmitButton();
@@ -597,15 +558,9 @@ export const fillFormNewIframe = async (page, origin) => {
     } else {
       await page.keyboard.press("Enter");
     }
-    const afterFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling.png`
-    );
+    const afterFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/after-filling.png`);
     await convertToMobile(page);
-    const afterFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling-mobile.png`
-    );
+    const afterFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/after-filling-mobile.png`);
     await convertToDesktop(page);
     return {
       data: {
@@ -643,9 +598,7 @@ export const fillFormNew = async (page, origin) => {
       const detectFormElementsInShadowDOM = async (element) => {
         const cords = [];
         if (element.shadowRoot) {
-          const inputs = element.shadowRoot.querySelectorAll(
-            'input:not([type="hidden"],[type="file"]), select, textarea'
-          );
+          const inputs = element.shadowRoot.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
           for (const input of inputs) {
             cords.push(await getCenterCoordinates(input));
           }
@@ -662,9 +615,7 @@ export const fillFormNew = async (page, origin) => {
         return cords;
       };
 
-      const inputs = document.querySelectorAll(
-        'input:not([type="hidden"],[type="file"]), select, textarea'
-      );
+      const inputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
       for (const input of inputs) {
         cords.push(await getCenterCoordinates(input));
       }
@@ -691,15 +642,9 @@ export const fillFormNew = async (page, origin) => {
       return iframeResult;
     }
     await convertToDesktop(page);
-    const beforeFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling.png`
-    );
+    const beforeFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/before-filling.png`);
     await convertToMobile(page);
-    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling-mobile.png`
-    );
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/before-filling-mobile.png`);
     await convertToDesktop(page);
     const gptPrompt = prompt2(filteredCords);
     const gptResponse = await generalOpenAIResponse(gptPrompt);
@@ -716,18 +661,12 @@ export const fillFormNew = async (page, origin) => {
           if (dropdownSelector) {
             const options = await page.evaluate((dropdownSelector) => {
               const selectElement = document.querySelector(dropdownSelector);
-              return Array.from(selectElement.options).map(
-                (option) => option.value
-              );
+              return Array.from(selectElement.options).map((option) => option.value);
             }, dropdownSelector);
-            const randomOption =
-              options[Math.floor(Math.random() * options.length)];
+            const randomOption = options[Math.floor(Math.random() * options.length)];
             await page.select(dropdownSelector, randomOption);
           }
-        } else if (
-          field.element_type === "checkbox" ||
-          field.element_type === "radiobutton"
-        ) {
+        } else if (field.element_type === "checkbox" || field.element_type === "radiobutton") {
           const checkboxEl = await page.waitForSelector(field.selector);
           await checkboxEl.click();
         }
@@ -737,30 +676,20 @@ export const fillFormNew = async (page, origin) => {
       }
     }
     await sleep(1000);
-    const afterFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling.png`
-    );
+    const afterFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/after-filling.png`);
     await sleep(1000);
     await convertToMobile(page);
-    const afterFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/after-filling-mobile.png`
-    );
+    const afterFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/after-filling-mobile.png`);
 
     const buttonSelector = await page.$(`button[type="submit"]`);
     if (buttonSelector) {
       await page.evaluate(() => {
         const findAndClickSubmitButton = () => {
-          const button = document.querySelector(
-            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
-          );
+          const button = document.querySelector('button[id*="submit"], button[type*="submit"], button[name*="submit"]');
           if (button) {
             button.click();
           } else {
-            document.activeElement?.dispatchEvent(
-              new KeyboardEvent("keydown", { key: "Enter" })
-            );
+            document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
           }
         };
         findAndClickSubmitButton();
@@ -789,22 +718,14 @@ export const fillFormNew = async (page, origin) => {
 };
 export const fillForm = async (page, origin) => {
   try {
-    const beforeFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling.png`
-    );
+    const beforeFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/before-filling.png`);
     await convertToMobile(page);
-    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling-mobile.png`
-    );
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/before-filling-mobile.png`);
     await convertToDesktop(page);
     const fillFormElements = async (page, elements) => {
       await page.evaluate(() => {
         const findSubmitButton = () => {
-          return document.querySelector(
-            'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
-          );
+          return document.querySelector('button[id*="submit"], button[type*="submit"], button[name*="submit"]');
         };
         const submitButton = findSubmitButton();
         if (submitButton) {
@@ -831,9 +752,7 @@ export const fillForm = async (page, origin) => {
                 };
               };
               // form elements in DOM
-              const inputs = document.querySelectorAll(
-                'input:not([type="hidden"],[type="file"]), select, textarea'
-              );
+              const inputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
               for (const input of inputs) {
                 cords.push(await getCenterCoordinates(input));
               }
@@ -842,9 +761,7 @@ export const fillForm = async (page, origin) => {
               const detectFormElementsInShadowDOM = async (element) => {
                 const cords = [];
                 if (element.shadowRoot) {
-                  const inputs = element.shadowRoot.querySelectorAll(
-                    'input:not([type="hidden"],[type="file"]), select, textarea'
-                  );
+                  const inputs = element.shadowRoot.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
                   for (const input of inputs) {
                     cords.push(await getCenterCoordinates(input));
                   }
@@ -874,10 +791,7 @@ export const fillForm = async (page, origin) => {
             let elementInfo = cords.find((item) => item.x == x && item.y == y);
             if (elementInfo) {
               console.log("filling the value : ", value);
-              const elementClickPoints = document.elementFromPoint(
-                elementInfo.x,
-                elementInfo.y
-              );
+              const elementClickPoints = document.elementFromPoint(elementInfo.x, elementInfo.y);
               if (elementClickPoints) {
                 console.log("clicking", elementInfo);
                 var clickEvent = new MouseEvent("click", {
@@ -914,9 +828,7 @@ export const fillForm = async (page, origin) => {
       const detectFormElementsInShadowDOM = async (element) => {
         const cords = [];
         if (element.shadowRoot) {
-          const inputs = element.shadowRoot.querySelectorAll(
-            'input:not([type="hidden"],[type="file"]), select, textarea'
-          );
+          const inputs = element.shadowRoot.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
           for (const input of inputs) {
             cords.push(await getCenterCoordinates(input));
           }
@@ -933,9 +845,7 @@ export const fillForm = async (page, origin) => {
         return cords;
       };
 
-      const inputs = document.querySelectorAll(
-        'input:not([type="hidden"],[type="file"]), select, textarea'
-      );
+      const inputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
       for (const input of inputs) {
         cords.push(await getCenterCoordinates(input));
       }
@@ -972,15 +882,9 @@ export const fillForm = async (page, origin) => {
     console.log("GPT Coordinates", responseJson.fields);
     if (responseJson.fields) {
       await fillFormElements(page, responseJson.fields);
-      const afterFillingUpScreenshot = await grabAScreenshot(
-        page,
-        `${origin.origin}/after-filling.png`
-      );
+      const afterFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/after-filling.png`);
       await convertToMobile(page);
-      const afterFillingUpScreenshotMobile = await grabAScreenshot(
-        page,
-        `${origin.origin}/after-filling-mobile.png`
-      );
+      const afterFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/after-filling-mobile.png`);
       return {
         data: {
           gptResponse,
@@ -1006,15 +910,9 @@ export const fillForm = async (page, origin) => {
 export const fillFormInsideIframe = async (page, origin) => {
   try {
     await convertToDesktop(page);
-    const beforeFillingUpScreenshot = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling.png`
-    );
+    const beforeFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/before-filling.png`);
     await convertToMobile(page);
-    const beforeFillingUpScreenshotMobile = await grabAScreenshot(
-      page,
-      `${origin.origin}/before-filling-mobile.png`
-    );
+    const beforeFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/before-filling-mobile.png`);
     const fillFormElementsOfIframe = async (page, elements) => {
       const elementData = elements.map(({ location, value }) => ({
         x: location.x,
@@ -1024,8 +922,7 @@ export const fillFormInsideIframe = async (page, origin) => {
 
       await page
         .evaluate(async (elementData) => {
-          const sleep = (ms) =>
-            new Promise((resolve) => setTimeout(resolve, ms));
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
           const getCenterCoordinates = (element) => {
             const rect = element.getBoundingClientRect();
@@ -1039,9 +936,7 @@ export const fillFormInsideIframe = async (page, origin) => {
           const detectFormElementsInShadowDOM = async (element) => {
             const cords = [];
             if (element.shadowRoot) {
-              const inputs = element.shadowRoot.querySelectorAll(
-                'input:not([type="hidden"],[type="file"]), select, textarea'
-              );
+              const inputs = element.shadowRoot.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
               for (const input of inputs) {
                 cords.push(getCenterCoordinates(input));
               }
@@ -1065,9 +960,7 @@ export const fillFormInsideIframe = async (page, origin) => {
           };
 
           const cords = [];
-          const inputs = document.querySelectorAll(
-            'input:not([type="hidden"],[type="file"]), select, textarea'
-          );
+          const inputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
           for (const input of inputs) {
             cords.push(getCenterCoordinates(input));
           }
@@ -1076,9 +969,7 @@ export const fillFormInsideIframe = async (page, origin) => {
           }
 
           elementData.forEach(({ x, y, value }) => {
-            const elementInfo = cords.find(
-              (item) => item.x === x && item.y === y
-            );
+            const elementInfo = cords.find((item) => item.x === x && item.y === y);
             console.log("found element :: ", x, y, elementInfo);
             if (elementInfo) {
               fillFormValue(elementInfo.element, value);
@@ -1090,9 +981,7 @@ export const fillFormInsideIframe = async (page, origin) => {
           await sleep(500);
 
           const findSubmitButton = () => {
-            return document.querySelector(
-              'button[id*="submit"], button[type*="submit"], button[name*="submit"]'
-            );
+            return document.querySelector('button[id*="submit"], button[type*="submit"], button[name*="submit"]');
           };
           const submitButton = findSubmitButton();
           console.log(submitButton);
@@ -1128,9 +1017,7 @@ export const fillFormInsideIframe = async (page, origin) => {
       ],
     });
 
-    const registerFrame = frames.find(
-      (f) => f.name() === iframeIdentification.choices[0].message.content
-    );
+    const registerFrame = frames.find((f) => f.name() === iframeIdentification.choices[0].message.content);
     if (!registerFrame) throw new Error("Could not detect iframe");
     const inputsWithinIframe = await registerFrame.evaluate(() => {
       const getCenterCoordinates = (element) => {
@@ -1143,9 +1030,7 @@ export const fillFormInsideIframe = async (page, origin) => {
       };
 
       const tempCords = [];
-      const neededInputs = document.querySelectorAll(
-        'input:not([type="hidden"],[type="file"]), select, textarea'
-      );
+      const neededInputs = document.querySelectorAll('input:not([type="hidden"],[type="file"]), select, textarea');
       for (const input of neededInputs) {
         tempCords.push(getCenterCoordinates(input));
       }
@@ -1171,15 +1056,9 @@ export const fillFormInsideIframe = async (page, origin) => {
     if (responseJson.fields) {
       await fillFormElementsOfIframe(registerFrame, responseJson.fields);
       await convertToDesktop(page);
-      const afterFillingUpScreenshot = await grabAScreenshot(
-        page,
-        `${origin.origin}/after-filling.png`
-      );
+      const afterFillingUpScreenshot = await grabAScreenshot(page, `${origin.origin}/after-filling.png`);
       await convertToMobile(page);
-      const afterFillingUpScreenshotMobile = await grabAScreenshot(
-        page,
-        `${origin.origin}/after-filling-mobile.png`
-      );
+      const afterFillingUpScreenshotMobile = await grabAScreenshot(page, `${origin.origin}/after-filling-mobile.png`);
       await convertToDesktop(page);
       return {
         data: {
@@ -1230,15 +1109,12 @@ export async function scrapeReviews(website) {
   const toPage = 3;
   const reviews = [];
 
-  const { browser, page } = await start_browser()
+  const { browser, page } = await start_browser();
 
   let overallRating = "0";
 
   for (let i = fromPage; i <= toPage; i++) {
-    await page.goto(
-      `https://www.trustpilot.com/review/${website}?page=${i}&date=last30days&language=en`,
-      { waitUntil: "domcontentloaded" }
-    );
+    await page.goto(`https://www.trustpilot.com/review/${website}?page=${i}&date=last30days&language=en`, { waitUntil: "domcontentloaded" });
 
     const pageReviews = await page.evaluate(() => {
       const reviewsArray = [];
@@ -1246,39 +1122,23 @@ export async function scrapeReviews(website) {
         ".paper_paper__1PY90.paper_outline__lwsUX.card_card__lQWDv.card_noPadding__D8PcU.styles_reviewCard__hcAvl"
       );
 
-      const overallRating = document.querySelector(
-        "span.typography_heading-m__T_L_X.typography_appearance-default__AAY17"
-      );
+      const overallRating = document.querySelector("span.typography_heading-m__T_L_X.typography_appearance-default__AAY17");
       const overallRatingText = overallRating ? overallRating.innerText : "";
 
       reviewElements.forEach((review) => {
-        const reviewTitleElement = review.querySelector(
-          ".typography_heading-s__f7029.typography_appearance-default__AAY17"
-        );
-        const reviewTitle = reviewTitleElement
-          ? reviewTitleElement.innerText
-          : "";
+        const reviewTitleElement = review.querySelector(".typography_heading-s__f7029.typography_appearance-default__AAY17");
+        const reviewTitle = reviewTitleElement ? reviewTitleElement.innerText : "";
 
-        const reviewUserElement = review.querySelector(
-          ".typography_heading-xxs__QKBS8.typography_appearance-default__AAY17"
-        );
+        const reviewUserElement = review.querySelector(".typography_heading-xxs__QKBS8.typography_appearance-default__AAY17");
         const reviewUser = reviewUserElement ? reviewUserElement.innerText : "";
 
         const reviewDateOriginalElement = review.querySelector("time");
-        const reviewDateOriginal = reviewDateOriginalElement
-          ? reviewDateOriginalElement.innerText
-          : "";
+        const reviewDateOriginal = reviewDateOriginalElement ? reviewDateOriginalElement.innerText : "";
 
-        const reviewRatingElement = review.querySelector(
-          ".star-rating_starRating__4rrcf.star-rating_medium__iN6Ty"
-        ).firstChild;
-        const reviewRating = reviewRatingElement
-          ? reviewRatingElement.getAttribute("alt")
-          : "";
+        const reviewRatingElement = review.querySelector(".star-rating_starRating__4rrcf.star-rating_medium__iN6Ty").firstChild;
+        const reviewRating = reviewRatingElement ? reviewRatingElement.getAttribute("alt") : "";
 
-        const reviewTextElement = review.querySelector(
-          ".typography_body-l__KUYFJ.typography_appearance-default__AAY17.typography_color-black__5LYEn"
-        );
+        const reviewTextElement = review.querySelector(".typography_body-l__KUYFJ.typography_appearance-default__AAY17.typography_color-black__5LYEn");
         const reviewText = reviewTextElement ? reviewTextElement.innerText : "";
 
         reviewsArray.push({
@@ -1303,26 +1163,16 @@ export async function scrapeReviews(website) {
 
 export const fillLoginForm = async (page) => {
   try {
-    const formFields = await page.$$eval("form input", (elements) =>
-      elements.map((element) => element.name || element.id)
-    );
+    const formFields = await page.$$eval("form input", (elements) => elements.map((element) => element.name || element.id));
     const email = process.env.BASIC_AUTH_USERNAME;
     const password = process.env.BASIC_AUTH_PASSWORD;
     console.log(email, password);
     for (const field of formFields) {
-      const element = await page.$(
-        `input[name="${field}"], input[id="${field}"]`
-      );
+      const element = await page.$(`input[name="${field}"], input[id="${field}"]`);
       if (element) {
-        const tagName = await page.evaluate(
-          (el) => el.tagName.toLowerCase(),
-          element
-        );
+        const tagName = await page.evaluate((el) => el.tagName.toLowerCase(), element);
         if (tagName === "input") {
-          if (
-            field.toLowerCase().includes("email") ||
-            field.toLowerCase().includes("username")
-          ) {
+          if (field.toLowerCase().includes("email") || field.toLowerCase().includes("username")) {
             console.log("typing", email);
             await element.type(email);
           } else if (field.toLowerCase().includes("password")) {
